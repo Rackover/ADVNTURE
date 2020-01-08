@@ -142,6 +142,11 @@ function receive_submission($db, $p, $player){
 		echo json_encode(["type"=>"error","content"=>"This location was forgotten ages ago, as it was too long and complex for anyone to remember.<br>You decide to turn around and go back to where you came from."]);
 		exit;
 	}
+	if (strlen($submission["dryTitle"]) < 2){
+		header('HTTP/1.0 400 Bad Request');
+		echo json_encode(["type"=>"error","content"=>"This location was forgotten ages ago.<br>The name was too short, and never really quite sticked to the mind of the travelers passing by.<br>You decide to turn around and go back to where you came from."]);
+		exit;
+	}
 	
 	$hide = false;
 	$hideReason = "";

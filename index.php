@@ -13,7 +13,7 @@
 	<head>
 		<meta charset="utf-8" />
 		<LINK href="style.css?version=<?php echo rand();?>" rel="stylesheet" type="text/css">
-		<link rel="icon" href="res/img/favicon.png" />
+		<link rel="icon" href="favicon.jpg" />
 		<title>ADVNTURE.WEB</title>
 		<script type="text/javascript" src="res/scripts/communication.js?version=<?php echo rand();?>"></script>
 		  
@@ -49,8 +49,8 @@
 			</div>
 			
 			<div id="editorNotice" style="display:none;">
-				<b>What is this place?</b><br>
-				Since no one has ever been here before, this place is for you to tell others about.<br>
+				<b>What happens now?</b><br>
+				Since no one has ever done that here before, this situation is for you to tell others about.<br>
 				What is it? What will you find here? Where does it lead?<br>
 				That's for <b>you</b> and only you to decide.<br><br>
 				

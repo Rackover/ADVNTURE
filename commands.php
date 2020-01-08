@@ -33,7 +33,8 @@
 		"SHOWLAST"=> 'command_last_uploads',
 		"LOGOUT" => 'command_logout',
 		"GOTO" => 'command_goto',
-		"PAGEINFO" => 'command_get_author_of'
+		"PAGEINFO" => 'command_get_author_of',
+		"BANCLIENT" => 'command_ban_client'
 	));
 		
 	function identify_command($db, $p, $player){
@@ -209,7 +210,7 @@
 	
   function command_identify($db, $elements, $player){
     $pass = implode(" ", $elements);
-    if (strtoupper$pass === getEnv("ADVNTURE_ADMIN_PASS"){
+    if (strtoupper($pass) === strtoupper(getEnv("ADVNTURE_ADMIN_PASS"))){
 		$_SESSION["isAdmin"] = true;
 		return_200("status", "OK.");
     }
@@ -297,14 +298,15 @@
 			$strProps []= "x".$prop["count"]." ".$prop["name"]."";
 		}
 		foreach($connections as $connection){
-			$strConnections .= "<li>".$connection["name"]." [id:".$connection["id"]."] ".($connection["is_dead_end"] ? "(dead end) " : "")."via ".$connection["command"]."</li>";
+			$strConnections .= "<li><span style='color:white;'>".$connection["name"]."</span> [id:<b style='color:yellow'>".$connection["id"]."</b>] "
+			.($connection["is_dead_end"] ? "(dead end) " : "")."via <span class='emphasis'>".$connection["command"]."</span></li>";
 		}
 		
 		return_200("status", '
-				<b>'.$title.'</b> ['.$id.']<br><i>'.$content.'</i><br>Made by ['.substr($author_id, 0, 6).'...] 
-				'.($is_client_banned ? "<span style='color:red;'>" : "").'('.($is_client_banned ? "BANNED " : "").'CLIENT id:'.$client_id.')'.($is_client_banned ? "</span>" : "").'
-				<br>Props: '.implode(", ", $strProps).'<br>
-				<br>Connections:
+				<b class="emphasis">'.$title.'</b> [<b style="color:yellow;">'.$id.'</b>]<br><i>'.$content.'</i><br>Made by <span style="color:white;">PLAYER id:<b style="color:yellow;">'.substr($author_id, 0, 6).'...</b></span> 
+				'.($is_client_banned ? "<span style='color:red;'>" : "").'('.($is_client_banned ? "BANNED " : "").'CLIENT id:<b style="color:yellow;">'.$client_id.'</b>)'.($is_client_banned ? "</span>" : "").'
+				<br><br><b>Props</b>: '.implode(", ", $strProps).'<br>
+				<br><b>Connections</b>:
 				<ul>
 					'.$strConnections.'
 				</ul>
@@ -316,7 +318,7 @@
   function command_last_uploads($db, $elements, $player){
     if (!isset($_SESSION["isAdmin"]) || !$_SESSION["isAdmin"]) close_connection_wrong_command("SHOWLAST");
     
-    $state = $db->prepare("SELECT creation,author_id,content,is_hidden FROM page ORDER BY id DESC LIMIT 5");
+    $state = $db->prepare("SELECT creation,author_id,content,is_hidden,id FROM page ORDER BY id DESC LIMIT 5");
     $state->execute();
     $data = $state->fetchAll();
 	$text = [];
@@ -324,7 +326,7 @@
 		$elements = explode("\n", trim($page["content"]));
 		$title = "<b".(count($elements) <= 1 ? " style='color:yellow;'" : "").">".array_shift($elements)."</b>";
 		$content = count($elements) > 0 ? implode("<br>", $elements) : "((dead end))";
-		$thisText = "[".$page["creation"]."] (".$page["author_id"].")<br>".$title."<br>".$content;
+		$thisText = "[".$page["creation"]."] (".$page["author_id"].")<br>".$title." [<b style='color:yellow'>".$page["id"]."]</b><br>".$content;
 		if ($page["is_hidden"]) $thisText = "<span style='color:red;'>".$thisText."</span>";
 		$text []= $thisText;
 	}
@@ -351,6 +353,15 @@
 		$db->prepare("UPDATE player SET page_id=? WHERE id=?")->execute([$data["id"], $player["id"]]);
 		return_200("page", $page);
 	}
+  }
+  
+  function command_ban_client($db, $elements, $player){
+    if (!isset($_SESSION["isAdmin"]) || !$_SESSION["isAdmin"]) close_connection_wrong_command("BANCLIENT");
+	if (count($elements) < 1 || !intval($elements[0])) return_200("status", "Invalid page ID supplied");
+	$id = $elements[0];
+	
+	ban_client($db, $id, "Manual ban from admin");
+	return_200("status", "Client ".$id.", if they exist, have been <b>banned</b>");
   }
   
 ?>
