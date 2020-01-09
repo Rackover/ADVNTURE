@@ -77,8 +77,20 @@
 					<li>- <b>INVENTORY</b>: Tells you what you objects you currently have.</li>
 					<li>- <b>CLEAR</b>: Clears the console.</li>
 					<li>- <b>INTRO</b>: Prints the welcome message.</li>
+					<li>- <b>CREDITS</b>: Prints the credits.</li>
 					<li>- <b>HELP</b>: Prints this message.</li>
 				</ul>
+			</div>
+			<div id="credits" style="display:none;">
+				<h1>Credits</h1>
+				<ul style="list-style: none">
+					<li>- <b style="color:pink;">LOUVE &lt;RACKOVER&gt; HURLANTE</b>: Game design & development</li>
+					<li>- <b style="color:lightgreen;">ARCHI &lt;ROGGAH&gt; KAZOO</b>: Moderation</li>
+					<li>- <b style="color:#ccccff;">MANUELA &lt;LUNEMAA&gt;</b>: Cuddles & food</li>
+				</ul>
+				<p style="color:white;">Thanks to everyone who contributed to ADVNTURE!<br>
+				I don't have your names, but I appreciate each of your contributions.</p>
+				<p>louve@louve.systems - 2019</p>
 			</div>
 			<div id="intro" style="display:none;">
 				<p><h1><pre>       d8888 8888888b.  888     888 888b    888 88888888888 888     888 8888888b.  8888888888 

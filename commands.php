@@ -20,6 +20,7 @@
 		"WHOAMI" => 'command_whoami',
 		"PAGEID" => 'command_page_id',
 		"MUSIC" => 'command_music',
+		"CREDITS" => 'command_credits',
 		
 		"N" => 'command_direction_north',
 		"S" => 'command_direction_south',
@@ -147,6 +148,10 @@
 	
 	function command_intro($db, $elements, $player){
 		return_200("intro", get_page($db, $player["location"], $player));
+	}
+	
+	function command_credits($db, $elements, $player){
+		return_200("credits", null);
 	}
 	
 	function command_whoami($db, $elements, $player){

@@ -8,7 +8,7 @@ let editorExistingPages = [];
 let currentPage = 1;
 let maxNumberOfCharacters = 256; // I suggest you do not try to change that.
 let previousMobileBufferSize = 0;
-
+let lastMobileCharacter = "";
 // Mobile
 window.onload = function() {
 	if (detectmob()){
@@ -30,6 +30,10 @@ window.onload = function() {
 			
 			if (previousMobileBufferSize > txtArea.value.length){
 				code = 8;
+			}
+			
+			if (str === " "){
+				txt = txt.substring(0, txt.length-1);
 			}
 			
 			if (code === 10){
@@ -400,6 +404,10 @@ function interpretServerFeedback(data){
 			
 		case "help":
 			return document.getElementById("help").innerHTML;
+			break;
+			
+		case "credits":
+			return document.getElementById("credits").innerHTML;
 			break;
 			
 		case "intro":
