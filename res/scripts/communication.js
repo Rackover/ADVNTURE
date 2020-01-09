@@ -67,7 +67,7 @@ function keyPress(keyEvent){
 	let prevent = true;
 	if (keyEvent.keyCode == 8) backspaceConsole();
 	//else if (keyEvent.keyCode == 46) deleteConsole();
-	else if ((keyEvent.keyCode >= 48 && keyEvent.keyCode <= 90) || keyEvent.keyCode == 32 || ':;,!?.azertyuiopqsdfghjklmwxcvbnAZERTYUIOPQSDFGHJKLMWXCVBN&()-"\'$1234567890'.includes(keyEvent.key)) 
+	else if ((keyEvent.keyCode >= 48 && keyEvent.keyCode <= 90) || keyEvent.keyCode == 32 || ':;,!?.azertyuiopqsdfghjklmwxcvbnAZERTYUIOPQSDFGHJKLMWXCVBN&()-"\'$1234567890⠀'.includes(keyEvent.key)) 
 		inputToConsole(keyEvent.key);
 	else if (keyEvent.keyCode === 13){
 		if (isInEditor) inputToConsole("\n");

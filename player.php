@@ -79,6 +79,10 @@ function ban_client($db, $id, $reason){
 	$state->execute([$reason]);
 }
 
+function player_lose_object($db, $player_id, $object_id){
+	$db->prepare("DELETE FROM player_prop WHERE prop_id=? AND player_id=?")->execute([$object_id, $player_id]);
+}
+
 function create_player($db, $clientId, $playerId){
 	$statement = $db->prepare("INSERT IGNORE INTO player (id, client_id, page_id) VALUES (?, ?, ?)");
 	$statement->execute([ $playerId, $clientId, "1" ]);

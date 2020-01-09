@@ -34,12 +34,13 @@
 		"LOGOUT" => 'command_logout',
 		"GOTO" => 'command_goto',
 		"PAGEINFO" => 'command_get_author_of',
-		"BANCLIENT" => 'command_ban_client'
+		"BANCLIENT" => 'command_ban_client',
+		"GETITEM" => 'command_give_me'
 	));
 		
 	function identify_command($db, $p, $player){
 
-		$txt = $p["command"];
+		$txt = trim($p["command"]);
 		$elements = explode (" ", $txt);
 		$command = $elements[0];
 		array_shift($elements);
@@ -324,9 +325,9 @@
 	$text = [];
 	foreach($data as $page){
 		$elements = explode("\n", trim($page["content"]));
-		$title = "<b".(count($elements) <= 1 ? " style='color:yellow;'" : "").">".array_shift($elements)."</b>";
+		$title = "<b style='color:white;".(count($elements) <= 1 ? " font-weight:normal;" : "")."'>".array_shift($elements)."</b>";
 		$content = count($elements) > 0 ? implode("<br>", $elements) : "((dead end))";
-		$thisText = "[".$page["creation"]."] (".$page["author_id"].")<br>".$title." [<b style='color:yellow'>".$page["id"]."]</b><br>".$content;
+		$thisText = $page["creation"]." - ".$title." [<b style='color:yellow'>".$page["id"]."</b>]<br>(author playerID:<span style='color:yellow;'>".$page["author_id"].")</span><br>".$content;
 		if ($page["is_hidden"]) $thisText = "<span style='color:red;'>".$thisText."</span>";
 		$text []= $thisText;
 	}
@@ -363,5 +364,22 @@
 	ban_client($db, $id, "Manual ban from admin");
 	return_200("status", "Client ".$id.", if they exist, have been <b>banned</b>");
   }
+  
+  
+	
+	function command_give_me($db, $elements, $player){
+		if (!isset($_SESSION["isAdmin"]) || !$_SESSION["isAdmin"]) close_connection_wrong_command("GETITEM");
+		$name = intval($elements[0]);
+		if (strlen($name) ===0 || count($elements) ===0){
+			return_200("status", "Take what?");
+		}
+		if (is_full_inventory($player)){
+			return_200("status", "Could not take ".strtolower($prop["name"]).": your inventory is full.<br>You must <b>LOSE</b> another object before grabbing ".strtolower($prop["name"]).".");
+		}
+			
+		$db->prepare("INSERT INTO player_prop (player_id, prop_id, original_page_id) VALUES (?, ?, ?)")->execute([$player["id"], $name, 1]);
+		$player = get_player($db);
+		return_200("status", "Gave you item ".$name);
+	}
   
 ?>

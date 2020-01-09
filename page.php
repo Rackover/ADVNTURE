@@ -85,6 +85,7 @@ function get_page($db, $id, $player){
 		if ($output["command"] === null) continue;
 		
 		$cmd = $output["origin_id"] === $id ? $output["command"] : reverse_direction_command($output["command"]);
+		if ($cmd === false) continue;
 		
 		if (
 			!isset($page["outputs"][$cmd]) || 
@@ -153,8 +154,10 @@ function receive_submission($db, $p, $player){
 	$currentGravity = 0;
 	
 	$props = [];
+	$submittedProps = [];
 	foreach($submission["props"] as $prop=>$count){
-		$props []= $prop;
+		$props []= trim($prop);
+		$submittedProps[$prop] = $count;
 	}
 	
 	// Check for red flags
@@ -201,7 +204,7 @@ function receive_submission($db, $p, $player){
 	
 	// Page
 	$statement = $db->prepare("INSERT INTO page (author_id, content, is_hidden, hidden_because, is_dead_end) VALUES (?, ?, ?, ?, ?)");
-	$statement->execute([$player["id"], $submission["dryTitle"]."\n".$submission["dryText"], $hide, $hideReason, $submission["isDeadEnd"]]);
+	$statement->execute([$player["id"], trim($submission["dryTitle"])."\n".trim($submission["dryText"]), $hide, $hideReason, $submission["isDeadEnd"]]);
 	$pageId = $db->lastInsertId();
 	
 	// Props
@@ -214,7 +217,7 @@ function receive_submission($db, $p, $player){
 	// Props placement
 	foreach($existingProps as $propName=>$propId){
 		$db->prepare("INSERT INTO prop_placement (prop_id, page_id, count) VALUES (?,?,?)")
-		->execute([$propId, $pageId, $submission["props"][$propName]]);
+		->execute([$propId, $pageId, $submittedProps[$propName]]);
 	}
 	
 	// Passage
@@ -257,7 +260,7 @@ function receive_submission($db, $p, $player){
 
 function reverse_direction_command($cmd){
 	switch($cmd){
-		default: return $cmd;
+		default: return $cmd; // should return false, but
 		case "NORTH": return "SOUTH";
 		case "SOUTH": return "NORTH";
 		case "EAST": return "WEST";
