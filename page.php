@@ -260,7 +260,7 @@ function receive_submission($db, $p, $player){
 
 function reverse_direction_command($cmd){
 	switch($cmd){
-		default: return $cmd; // should return false, but
+		default: return false; // should return false, but
 		case "NORTH": return "SOUTH";
 		case "SOUTH": return "NORTH";
 		case "EAST": return "WEST";

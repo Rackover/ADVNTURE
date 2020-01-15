@@ -6,13 +6,24 @@ let isInEditor = false;
 let editorDirection = "";
 let editorExistingPages = [];
 let currentPage = 1;
-let maxNumberOfCharacters = 256; // I suggest you do not try to change that.
-let previousMobileBufferSize = 0;
-let lastMobileCharacter = "";
+let lastCommand = "";
+
+
+const maxNumberOfCharacters = 256; // I suggest you do not try to change that.
+const allowedChars = ':;,!?.azertyuiopqsdfghjklmwxcvbnAZERTYUIOPQSDFGHJKLMWXCVBN&()-"\'$1234567890⠀';
+
 // Mobile
-window.onload = function() {
+window.onload = function() {	
 	if (detectmob()){
-		console.log("Mobile user");
+		const toRemove = [
+			document.getElementById("introWelcomeBar1"),
+			document.getElementById("introWelcomeBar2"),
+			document.getElementById("introBigTitle")
+		];
+		for(k in toRemove){
+			toRemove[k].parentNode.removeChild(toRemove[k]);
+		}
+		
 		const txtArea = document.createElement("textarea");
 		document.getElementById("mainContainer").appendChild(txtArea);
 		txtArea.focus();
@@ -24,32 +35,51 @@ window.onload = function() {
 		txtArea.style.left = "0";
 		txtArea.style.margin = "0";
 		txtArea.style.padding = "0";
+		txtArea.style.verticalAlign = "bottom";
+		txtArea.style.paddingTop = "70%";
+		
 		txtArea.oninput = function(e){			
 			let str = txtArea.value[txtArea.value.length-1];
 			let code = txtArea.value.length <= 0 ? 0 : str.charCodeAt(0);
 			
-			if (previousMobileBufferSize > txtArea.value.length){
-				code = 8;
-			}
-			
-			if (str === " "){
-				txt = txt.substring(0, txt.length-1);
-			}
-			
-			if (code === 10){
+			if (str === "\n" || code === 10){
 				code = 13;
 				str = "\n";
-				txt = txt.substring(0, txt.length-1); // Weird fix for mobile users
+			}
+			else{
+				if (isInEditor){
+					txt = txtArea.value;
+				}
+				else{
+					txt = txtArea.value.toUpperCase().replace(/(\r\n|\n|\r)/gm,"");
+				}
 			}
 			
-			keyPress(
-			{
-				keyCode: code,
-				key: str,
-				preventDefault: function(){}
+			if (isFrozen){
+				return;		
 			}
-			);
-			previousMobileBufferSize = txtArea.value.length;
+
+			let prevent = true;
+			if (allowedChars.includes(str)){
+				// Do nothing, text area is already being inputted to
+			}				
+			else if (code === 13){
+				if (isInEditor) inputToConsole("\n");
+				else if (txt.length > 0){
+					txtArea.value = "";
+					submitToConsole();
+				}
+				else prevent = false;
+			}
+		    else if (code === 38 && !isInEditor){
+				txt = lastCommand;
+			}
+			else 
+				prevent = false;
+
+			if (prevent){
+				updateText();
+			}
 		}
 	}
 	else{
@@ -71,13 +101,16 @@ function keyPress(keyEvent){
 	let prevent = true;
 	if (keyEvent.keyCode == 8) backspaceConsole();
 	//else if (keyEvent.keyCode == 46) deleteConsole();
-	else if ((keyEvent.keyCode >= 48 && keyEvent.keyCode <= 90) || keyEvent.keyCode == 32 || ':;,!?.azertyuiopqsdfghjklmwxcvbnAZERTYUIOPQSDFGHJKLMWXCVBN&()-"\'$1234567890⠀'.includes(keyEvent.key)) 
+	else if ((keyEvent.keyCode >= 48 && keyEvent.keyCode <= 90) || keyEvent.keyCode == 32 || allowedChars.includes(keyEvent.key)) 
 		inputToConsole(keyEvent.key);
 	else if (keyEvent.keyCode === 13){
 		if (isInEditor) inputToConsole("\n");
 		else if (txt.length > 0) submitToConsole();
 		else prevent = false;
 	}
+  else if (keyEvent.keyCode === 38 && !isInEditor){
+    txt = lastCommand;
+  }
 	else prevent = false;
 
 	if (prevent){
@@ -162,7 +195,7 @@ function deleteConsole(){
 
 function inputToConsole(letter){
 	const lines = txt.split("\n");
-	if (letter === "\n"){
+	if (letter === "\n"){ // That means we are in editor
 		if (isExistingPage(lines[0])){
 			submitToConsole();
 		}
@@ -319,6 +352,9 @@ function submitToConsole(){
 		}
 		isInEditor = false;
 	}
+  else{
+    lastCommand = txt;
+  }
 	
 	post(action, function(data){	
 		txt = "";
