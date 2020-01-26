@@ -74,7 +74,7 @@
 					<li>- <b>TAKE &lt;object&gt;</b>: Takes an object and adds it to your inventory.</li>
 					<li>- <b>LOSE &lt;object&gt;</b>: Removes an object from your inventory and puts it back where you took it.</li>
 					<li>- <b>USE &lt;object&gt;</b>: Uses an object at your current location.</li>
-					<li>- <b>INVENTORY</b>: Tells you what you objects you currently have.</li>
+					<li>- <b>INVENTORY</b>: Tells you what objects you currently have.</li>
 					<li>- <b>CLEAR</b>: Clears the console.</li>
 					<li>- <b>INTRO</b>: Prints the welcome message.</li>
 					<li>- <b>CREDITS</b>: Prints the credits.</li>
