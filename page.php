@@ -203,8 +203,8 @@ function receive_submission($db, $p, $player){
 	/// Process submission
 	
 	// Page
-	$statement = $db->prepare("INSERT INTO page (author_id, content, is_hidden, hidden_because, is_dead_end) VALUES (?, ?, ?, ?, ?)");
-	$statement->execute([$player["id"], trim($submission["dryTitle"])."\n".trim($submission["dryText"]), $hide, $hideReason, $submission["isDeadEnd"]]);
+	$statement = $db->prepare("INSERT INTO page (author_id, content, is_hidden, hidden_because, is_dead_end) VALUES (?, ?, ".intval($hide).", ?, ".intval($submission["isDeadEnd"]).")");
+	$statement->execute([$player["id"], trim($submission["dryTitle"])."\n".trim($submission["dryText"]), $hideReason]);
 	$pageId = $db->lastInsertId();
 	
 	// Props

@@ -5,6 +5,9 @@
  ini_set('display_startup_errors', 1); 
  error_reporting(E_ALL);
  
+ ini_set('session.gc_maxlifetime', PHP_INT_MAX-1);
+ session_set_cookie_params(PHP_INT_MAX-1); 
+ 
  session_start();
  
  
@@ -14,7 +17,10 @@ include "commands.php";
 $db = get_connection();
 $player = get_player($db);
 
-if ($player["is_banned"]) unset($_POST["action"]);
+if ($player["is_banned"]){
+	unset($_POST["action"]);
+	return_503_banned();
+}
 
 $actions = array(
 	"RECOVER"=>'recover',
@@ -44,8 +50,8 @@ function recover($db, $p, $player){
 	exit;
 }
 
-header('HTTP/1.0 503 Service Unavailable');
-echo json_encode(["type"=>"error","content"=>"ERR 503: Service unavailable"]);
+header('HTTP/1.0 500 Server error');
+echo json_encode(["type"=>"error","content"=>"ERR 500: Server error"]);
 exit;
 
 ?>

@@ -21,6 +21,8 @@
 		"PAGEID" => 'command_page_id',
 		"MUSIC" => 'command_music',
 		"CREDITS" => 'command_credits',
+		"CLIENT" => 'command_client_id',
+		"FAKEBAN" => 'command_fake_ban',
 		
 		"N" => 'command_direction_north',
 		"S" => 'command_direction_south',
@@ -87,6 +89,10 @@
 	
 	function command_direction_west($db, $elements, $player){
 		command_direction($db, $elements, $player, "WEST");
+	}
+	
+	function command_fake_ban($db, $elements, $player){
+		return_503_banned();
 	}
 	
 	function command_take($db, $elements, $player){
@@ -160,6 +166,10 @@
 	
 	function command_page_id($db, $elements, $player){
 		return_200("status", "The ID of your current location is: <span style='color:yellow;'>".$player["location"]."</span>");
+	}
+	
+	function command_client_id($db, $elements, $player){
+		return_200("status", "Your client ID is: <span style='color:yellow;font-weight:bold'>".$player["client_id"]."</span> (ADDR: <span style='font-weight:bold;color:lightgreen;'>".$player["client_address"]."</span>)");
 	}
 	
 	function command_brief($db, $elements, $player){

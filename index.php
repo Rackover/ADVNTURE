@@ -13,14 +13,22 @@
 	<head>
 		<meta charset="utf-8" />
 		<LINK href="style.css?version=<?php echo rand();?>" rel="stylesheet" type="text/css">
-		<link rel="icon" href="favicon.jpg" />
+		<link rel="icon" href="res/img/favicon.png" />
 		<title>ADVNTURE.WEB</title>
 		<script type="text/javascript" src="res/scripts/communication.js?version=<?php echo rand();?>"></script>
 		  
 		  <meta property="og:title" content="ADVNTURE.WEB">
 		  <meta property="og:description" content="Take a part in the greatest of adventures: <br>Yours.">
 		  <meta property="og:image" content="/res/img/metapreview.jpg">
-	</head>
+		
+<meta name="twitter:card" content="summary" />
+<meta name="twitter:site" content="@Rackover" />
+<meta name="twitter:title" content="ADVNTURE.WEB" />
+<meta name="twitter:description" content="Take a part in the greatest of adventures: <br>Yours." />
+<meta name="twitter:image" content="https://advnture.louve.systems/res/img/metapreview.jpg" />
+<meta name="twitter:image:alt" content="Wilderness. Adventure." />
+			  
+    </head>
 	<body>
 		<div id="mainContainer">
 			<div id="title">

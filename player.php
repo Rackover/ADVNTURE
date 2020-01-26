@@ -59,6 +59,7 @@ function get_player($db, $new=false){
 			"props"=>array(),
 			"id"=>$playerId,
 			"client_id"=>$client["id"],
+			"client_address"=>$ip,
 			"is_new"=>$new
 		);
 		foreach($result as $row){
