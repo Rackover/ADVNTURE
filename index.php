@@ -35,7 +35,7 @@
 		<div id="mainContainer">
 			<div id="title">
 				<h1>
-					ADVNTURE V1.1
+					ADVNTURE V1.2
 				</h1>
 				<h2>
 					An official sequel to EXPLORER - host to <?php echo $count; ?> places
@@ -59,22 +59,30 @@
 			</div>
 			
 			<div id="editorNotice" style="display:none;">
-				<b>What happens now?</b><br>
-				Since no one has ever done that here before, this situation is for you to tell others about.<br>
-				What is it? What will you find here? Where does it lead?<br>
-				That's for <b>you</b> and only you to decide.<br><br>
-				
-				<span class="emphasis">Write what you would like others to experience when they try to do what you just did.</span><br>
-				Ask yourself: what should happen when an adventurer does <b>[ %action ]</b> here?
+				<p>
+					<b class="emphasis">What happens now?</b><br>
+					Since no one has ever done that here before, this situation is for you to tell others about.<br>
+					What is it? What will you find here? Where does it lead?<br>
+					That's for <b>you</b> and only you to decide.<br><br>
+					
+					<span class="emphasis">Write what you would like others to experience when they try to do what you just did.</span><br>
+					Ask yourself: what should happen when an adventurer does <b>[ %action ]</b> here?
+					<ul style="list-style: none">
+						<li>- Use <b>ENTER</b> to insert line breaks</li>
+						<li>- Insert two line breaks when you're <b>done</b> telling</li>
+						<li>- The first line you write will be the <b>title</b></li>
+						<li>- If you write only one line, this shall not be a place, but a dead end.</li>
+						<li>- You can also name your place exactly like another existing location to create a <b>shortcut</b>.</li>
+					</ul>
+				</p>
+			</div>
+			
+			<div id="editorTips" style="display:none">
+				<b>Tips:</b><br>
 				<ul style="list-style: none">
-					<li>- Use <b>ENTER</b> to insert line breaks</li>
-					<li>- Insert two line breaks when you're <b>done</b> telling</li>
-					<li>- The first line you write will be the <b>title</b></li>
-					<li>- Add props by saying "<b>There is </b>1 something" or "<b>There are</b> X somethings"</li>
-					<li>- If you write only one line, this shall not be a place, but a dead end.</li>
-					<li>- You can also name your place exactly like another existing location to create a <b>shortcut</b>.</li>
+					<li>- Add props by saying "<span class="notice"><b>There is </b>1 something</span>" or "<span class="notice"><b>There are</b> X somethings</span>"</li>
+					<li>- Inflict damage or heal the player by saying "<span class="notice"><b>You gain X healthpoints</b></span>" or "<span class="notice"><b>You lose X healthpoints</b></span>"</li>
 				</ul>
-				
 			</div>
 			<div id="help" style="display:none;">
 				List of commands for ADVNTURE:<br>
@@ -85,6 +93,9 @@
 					<li>- <b>LOSE &lt;object&gt;</b>: Removes an object from your inventory and puts it back where you took it.</li>
 					<li>- <b>USE &lt;object&gt;</b>: Uses an object at your current location.</li>
 					<li>- <b>INVENTORY</b>: Tells you what objects you currently have.</li>
+					<li>- <b>STATUS</b>: Tells you how you currently feel.</li>
+				</ul>
+				<ul style="list-style: none; color:grey;">
 					<li>- <b>CLEAR</b>: Clears the console.</li>
 					<li>- <b>INTRO</b>: Prints the welcome message.</li>
 					<li>- <b>CREDITS</b>: Prints the credits.</li>
@@ -116,6 +127,12 @@ d88P     888 8888888P"      Y8P     888    Y888     888      "Y88888P"  888   T8
 				<p>Enjoy your stay on ADVNTURE - and by all means, expand it in all directions.<br>Do not worry about your language skills, for the vast majority of people aren't native speakers!</p>
 				<p><b> The world is yours. Make it your haven!</b></p>
 				<p class="emphasis"><b>Type HELP</b> to get a list of commands.<br>Type <b>BRIEF</b> to know where you are.</p>
+			</div>
+			<div id="death" style="display:none">
+				<span style='color:red;'>=============================<br><br></span>
+				<b style='color:red';>You fainted!</b><br><br>
+				Exhausted by your journey, you feel your limbs become numb and you decide to shut your eyes for a moment.
+				When you regain consciousness, you find yourself in the <span style='color:white;'>Forest outskirts</span>, stripped from all your belongings.<br><br>
 			</div>
 		</div>
 	</body>

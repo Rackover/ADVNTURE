@@ -1,5 +1,7 @@
 <?php
 
+define("STARTING_PAGE", 1);
+
 function get_page($db, $id, $player){
 	$statement = $db->prepare("
 		SELECT
@@ -11,12 +13,14 @@ function get_page($db, $id, $player){
 		  pp.prop_id,
 		  pp.count,
 		  page.is_dead_end,
-		  page.is_hidden
+		  page.is_hidden,
+		  hp_event.hp_change
 		FROM
 		  page
 		  LEFT JOIN page_succession ps ON ps.origin_id = page.id OR ps.target_id = page.id
 		  LEFT JOIN prop_placement pp ON pp.page_id = page.id
 		  LEFT JOIN prop p ON p.id = pp.prop_id
+		  LEFT JOIN hp_event hp_event ON hp_event.page_id = page.id
 		WHERE
 		  page.id = ?
 
@@ -37,6 +41,7 @@ function get_page($db, $id, $player){
 		"is_dead_end" => $result[0]["is_dead_end"],
 		"props"=>array(),
 		"outputs"=>array(),
+		"hp_events"=>array(),
 		"id"=>$id
 	);
 	
@@ -79,6 +84,12 @@ function get_page($db, $id, $player){
 			"count"=>$prop["count"]
 		);
 	}
+	
+	// HP Event
+	foreach($result as $he){
+		if ($he["hp_change"] === null) continue;
+		$page["hp_events"][] = $he["hp_change"]; 
+	}
 
 	// Outputs
 	foreach($result as $output){
@@ -102,6 +113,7 @@ function get_page($db, $id, $player){
 		$page["is_dead_end"] = true;
 		$page["content"] = "You cannot go further in that direction: a thick mist hinders your progression. <br>Despite your best efforts, you have no choice but to turn around and go back to where you came from - that is, until the fog has dissipated.";
 		$page["props"] = array();
+		$page["hp_events"] = array();
 	}
 	
 	return $page;
@@ -117,9 +129,19 @@ function receive_submission($db, $p, $player){
 		$result = $statement->fetch();
 
 		if ($result === false){
+			
 			// ???
+			// Might just be a place with objects/hpevents but without a description...
+			// Sucks but technically not illegal
+			
+			/*
 			header('HTTP/1.0 400 Bad Request');
 			echo json_encode(["type"=>"error","content"=>"ERR 400: Bad request"]);
+			exit;
+			*/
+			
+			header('HTTP/1.0 400 Bad Request');
+			echo json_encode(["type"=>"error","content"=>"Not enough was known about this place, and so it never really set in as an interesting location.<br>You decide to turn around and go back to where you came from."]);
 			exit;
 		}
 		else{
@@ -220,6 +242,11 @@ function receive_submission($db, $p, $player){
 		->execute([$propId, $pageId, $submittedProps[$propName]]);
 	}
 	
+	// HP events
+	foreach($submission["hpEvents"] as $value){
+		$db->prepare("INSERT INTO hp_event (page_id, hp_change) VALUES (?, ?)")->execute([$pageId, $value]);
+	}
+	
 	// Passage
 	$db->prepare("INSERT INTO page_succession (origin_id, target_id, command) VALUES (?,?,?)")
 	->execute([$submission["origin"], $pageId, trim($submission["direction"])]);
@@ -286,6 +313,5 @@ function get_all_page_names($db){
 	}
 	return $titles;
 }
-
 
 ?>

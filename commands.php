@@ -1,7 +1,7 @@
 <?php 
-	include "page.php";
-	include "player.php";
-	include "connection.php";
+	include_once  "page.php";
+	include_once  "player.php";
+	include_once  "connection.php";
 
 	define("COMMANDS", array(
 		"NORTH" => 'command_direction_north',
@@ -14,7 +14,6 @@
 		"BRIEF" => 'command_brief',
 		"CLEAR" => 'command_clear',
 		"USE" => 'command_use',
-		"RESET" => 'command_reset',
 		"HELP" => 'command_help',
 		"INTRO" => 'command_intro',
 		"WHOAMI" => 'command_whoami',
@@ -23,6 +22,9 @@
 		"CREDITS" => 'command_credits',
 		"CLIENT" => 'command_client_id',
 		"FAKEBAN" => 'command_fake_ban',
+		"STATUS" => 'command_hp_status',
+		"REST" => 'command_rest',
+		"FAINT" => 'command_suicide',    
 		
 		"N" => 'command_direction_north',
 		"S" => 'command_direction_south',
@@ -31,6 +33,11 @@
 		"LOOK" => 'command_brief',
 		"?" => 'command_help',
 		"CRASH" => 'command_crash',
+		"HEALTHCHECK" => 'command_hp_status',
+		"HP" => 'command_hp_status',
+		"HEALTH" => 'command_hp_status',
+		"HEALTHPOINTS" => 'command_hp_status',    
+		"SUICIDE" => 'command_suicide',
     
 		"IDENTIFY"=> 'command_identify',
 		"SHOWLAST"=> 'command_last_uploads',
@@ -62,6 +69,27 @@
 			$newId = $page["outputs"][$direction]["destination"];
 			$newPage = get_page($db, $newId, $player);
 			
+			// HP Calculation
+			$change = 0;
+			foreach($newPage["hp_events"] as $hpChange){
+				$change += $hpChange;
+			}
+			$player["hp"] += $change;
+			$player["hp"] = min($player["hp"], MAX_HP);
+				
+			if ($player["hp"] <= 0){
+				$db->prepare("UPDATE player SET page_id=? WHERE id=?")->execute([STARTING_PAGE."", $player["id"]]);	// First page (ID:1)
+				$db->prepare("UPDATE player SET hp=? WHERE id=?")->execute([BASE_HP, $player["id"]]);	
+				$db->prepare("DELETE FROM player_prop WHERE player_id=?")->execute([$player["id"]]);
+				$newPage = get_page($db, STARTING_PAGE, $player["id"]);
+				return_200("death", $newPage);
+			}
+			else if ($change != 0){
+				$db->prepare("UPDATE player SET hp=? WHERE id=?")->execute([$player["hp"], $player["id"]]);
+				// $newPage["content"].= "<br>"."(You currently have ".$player["hp"]." health points)";
+			}
+			
+			// Returning results
 			if ($newPage["is_dead_end"]){
 				return_200("status", $newPage["content"]);
 			}
@@ -93,6 +121,31 @@
 	
 	function command_fake_ban($db, $elements, $player){
 		return_503_banned();
+	}
+	
+	function command_rest($db, $elements, $player){
+		$page = get_page($db, $player["location"], $player);
+		$change = 0;
+		foreach($page["hp_events"] as $hpChange){
+			$change += $hpChange;
+		}
+		if ($change < 0){
+			return_200("status", "You cannot rest in a dangerous place like this!");
+		}
+		if ($player["hp"] >= BASE_HP){
+			return_200("status", "You decide to rest and stay here for a little while before resuming your journey.");
+		}
+		$regain = min(BASE_HP-$player["hp"], random_int (2, 5));
+		$player["hp"] += $regain;
+		$db->prepare("UPDATE player SET hp=? WHERE id=?")->execute([$player["hp"], $player["id"]]);	
+		return_200("status","You take some time to rest and heal your wounds. When you get up after a few hours, you feel much better.<br><br>You recovered <b style='color:lightgreen;'>".$regain."</b> health points.");
+	}
+	
+	function command_suicide($db, $elements, $player){
+		$db->prepare("UPDATE player SET page_id=? WHERE id=?")->execute([STARTING_PAGE, $player["id"]]);	// First page (ID:1)
+		$db->prepare("UPDATE player SET hp=? WHERE id=?")->execute([BASE_HP, $player["id"]]);	
+		$db->prepare("DELETE FROM player_prop WHERE player_id=?")->execute([$player["id"]]);
+		return_200("death", get_page($db, STARTING_PAGE, $player));
 	}
 	
 	function command_take($db, $elements, $player){
@@ -161,7 +214,7 @@
 	}
 	
 	function command_whoami($db, $elements, $player){
-		return_200("status", "You are user [<span style='color:yellow;'>".$player["id"]."</span>]");
+		return_200("status", "You are user [<span style='color:yellow;'>".$player["id"]."</span>]<br><br><i style='color:grey;'>\"Alan...? That's your name, isn't it?\"<br>\"The name of my user.\"</i>");
 	}
 	
 	function command_page_id($db, $elements, $player){
@@ -174,7 +227,7 @@
 	
 	function command_brief($db, $elements, $player){
 		$page = get_page($db, $player["location"], $player);
-		return_200("page", $page);
+		return_200("brief", $page);
 	}
 	
 	function command_music($db, $elements, $player){
@@ -214,8 +267,8 @@
 	}
 	
 	function command_reset($db, $elements, $player){
-		$db->prepare("UPDATE player SET page_id=1 WHERE id=?")->execute([$player["id"]]);
-		$page = get_page($db, 1, $player);
+		$db->prepare("UPDATE player SET page_id=? WHERE id=?")->execute([STARTING_PAGE."", $player["id"]]);
+		$page = get_page($db, STARTING_PAGE, $player);
 		return_200("page", $page);
 	}
 	
@@ -223,6 +276,34 @@
 		var_dump("crash");
 		exit;
 	}
+  
+  function command_hp_status($db, $elements, $player){
+	  $msg = "";
+	  if ($player["hp"] < BASE_HP/4){
+		$msg .= "At this point, you're hardly keeping yourself together.<br>You can barely stand, and definitely need some rest.";
+	  }
+	  else if ($player["hp"] < BASE_HP/2){
+		$msg .= "You are not feeling well. Maybe some rest is in order.";
+	  }
+	  else if ($player["hp"] < BASE_HP){
+		$msg .= "A few bruises, but nothing bad.";
+	  }
+	  else if ($player["hp"] < BASE_HP*1.5){
+		$msg .= "You feel fresh and ready to pursue your ADVNTURE, wherever it may lead!";
+	  }
+	  else if ($player["hp"] < BASE_HP*4){
+		$msg .= "You feel unusally strong and robust.<br>Nothing can stop you.";
+	  }
+	  else if ($player["hp"] < BASE_HP*10){
+		$msg .= "You feel like your skin is steel-plated, harmproof.<br>You're filled with determination.";
+	  }
+	  else if ($player["hp"] <= MAX_HP){
+		$msg .= "A supernatural strength inhabits you.<br>You feel invincible.";
+	  }
+	  
+	  $msg .= "<br>You currently have ".$player["hp"]." health points.";
+	  return_200("status", $msg);
+  }
 	
   function command_identify($db, $elements, $player){
     $pass = implode(" ", $elements);

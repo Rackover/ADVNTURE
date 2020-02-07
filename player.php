@@ -1,6 +1,10 @@
 <?php
 
 define("INVENTORY_LIMIT", 10);
+define("BASE_HP", 10);
+define("MAX_HP", 255);
+
+include_once "page.php";
 
 function get_client($db, $ip){
 	$state = $db->prepare("SELECT id, is_banned, ban_reason FROM client WHERE address=?");
@@ -36,6 +40,7 @@ function get_player($db, $new=false){
 		  player_prop.prop_id,
 		  player_prop.original_page_id,
 		  player_prop.id AS player_prop_id,
+		  player.hp,
 		  prop.name
 		FROM
 		  player
@@ -60,7 +65,8 @@ function get_player($db, $new=false){
 			"id"=>$playerId,
 			"client_id"=>$client["id"],
 			"client_address"=>$ip,
-			"is_new"=>$new
+			"is_new"=>$new,
+			"hp"=>$result[0]["hp"]
 		);
 		foreach($result as $row){
 			if ($row["prop_id"] === null) continue;
@@ -86,7 +92,7 @@ function player_lose_object($db, $player_id, $object_id){
 
 function create_player($db, $clientId, $playerId){
 	$statement = $db->prepare("INSERT IGNORE INTO player (id, client_id, page_id) VALUES (?, ?, ?)");
-	$statement->execute([ $playerId, $clientId, "1" ]);
+	$statement->execute([ $playerId, $clientId, STARTING_PAGE."" ]);
 }
 
 function is_full_inventory($player){

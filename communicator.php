@@ -11,8 +11,8 @@
  session_start();
  
  
-include "database.php";
-include "commands.php";
+include_once "database.php";
+include_once "commands.php";
  
 $db = get_connection();
 $player = get_player($db);

@@ -8,9 +8,11 @@ let editorExistingPages = [];
 let currentPage = 1;
 let lastCommand = "";
 
-
 const maxNumberOfCharacters = 256; // I suggest you do not try to change that.
 const allowedChars = ':;,!?.azertyuiopqsdfghjklmwxcvbnAZERTYUIOPQSDFGHJKLMWXCVBN&()-"\'$1234567890⠀';
+const hpAliases = ["hp", "healthpoints", "hitpoints", "pv", "lp", "lifepoints", "healthpoint", "lifepoint"]
+const hpDoubleAliases = ["health", "hit", "life"]
+const hpDoubleAliasesPlurals = ["points", "point"]
 
 // Mobile
 window.onload = function() {	
@@ -143,24 +145,23 @@ function updateText(){
 	
 	if (isInEditor){		
 		const lines = txt.split("\n");
+		let characterCount = 0;
+		for (k in lines){
+			characterCount += lines[k].length;
+		}
 		hTxt += "<br>";
 		if (lines.length <= 1 && lines[0].length > 0){
 			const existing = isExistingPage(lines[0]);
 			if (existing){
-				hTxt += "<span class='notice'>Press ENTER to make this place a direct shortcut to '"+existing+"'</span>"
+				hTxt += "<br><span class='notice'>Press ENTER to make this place a direct shortcut to '"+existing+"'</span>"
 			}
 			else{
-				hTxt += "<span class='notice'>With only one line, this will be a dead end.<br>'You cannot go there', or something like that.<br>Press ENTER if you want to keep writing and make this a real place.";
+				hTxt += "<br><span class='notice'>With only one line, this will be a dead end.<br>'You cannot go there', or something like that.<br><span style='color:white;'>Press ENTER if you want to keep writing</span> and make this a real place.";
 			}
 		}
 		else if (lines.length >1 && lines[lines.length-1].length === 0){
-			let characterCount = 0;
-			for (k in lines){
-				characterCount += lines[k].length;
-			}
 			if (characterCount > 0){
-				hTxt += "<span class='notice'>Press ENTER a second time to end edition and save that place.<br>If you wish to write more, you can also keep writing.";
-				hTxt += "</span>";
+				hTxt += "<span class='notice'>Press ENTER a second time to <span style='color:white;'>end edition</span> and save that place.</span><br>If you wish to write more, you can also <span style='color:white;'>keep writing.</span></span>";
 			}
 			else{
 				hTxt += "<span class='notice'>Press ENTER a second time to abort edition and go back to where you were.</span>";
@@ -174,7 +175,10 @@ function updateText(){
 			else{
 				lengthNotice = "<span style='color:darkGrey;'>"+lengthNotice+"</span>";
 			}
-			hTxt+= lengthNotice;
+			hTxt += "<br>"+lengthNotice;
+			if (characterCount > 0){
+				hTxt += "<br><br><span class='notice'>"+document.getElementById("editorTips").innerHTML+"</span>";
+			}
 		}
 	}
 	
@@ -241,16 +245,17 @@ function parseText(){
 	let isShortCut = false
 	let dryTextLines = [];
 	let dryTitle = lines[0];
+	let hpEvents = []
 	
 	if (isInEditor){
 		if (lines.length <= 1 || (lines.length === 2 && lines[1].length === 0)){
 			const existing = isExistingPage(lines[0]);
 			if (existing){
-				lines[0] = "<span style='color:green'>"+lines[0]+"</span> <span style='color:grey'>&lt;-- This will be a shortcut to '"+existing+"'</span>";
+				lines[0] = "<span style='color:white'><u>"+lines[0]+"</u></span> <span style='color:grey'>&lt;-- This will be a shortcut to '"+existing+"'</span>";
 				isShortCut = true;
 			}
 			else{
-				lines[0] = "<span style='color:red'>"+lines[0]+"</span>";
+				lines[0] = "<span style='color:grey'>"+lines[0]+""+(lines[0].length === 0 ? "" : " <i>(dead end)</i></span>");
 				isDeadEnd = true;
 			}
 		}
@@ -262,7 +267,7 @@ function parseText(){
 			const words = lines[i].split(" ");
 			let isDryLine = true;
 			if (words.length >= 4){
-				if (words[0] === "There"){
+				if (words[0].toLowerCase() === "there"){
 					if (words[1] === "is"){
 						lines[i] = "<span class='object'>"+lines[i]+"</span>";
 					
@@ -295,6 +300,20 @@ function parseText(){
 						}						
 					}
 				}
+				else if (words[0].toLowerCase() === "you"){
+					if (hpAliases.includes(words[3].toLowerCase().replace(".", "")) || (words.length > 4 && hpDoubleAliases.includes(words[3].toLowerCase()) && hpDoubleAliasesPlurals.includes(words[4].replace(".", "")))){
+						const multiple = words[1].toLowerCase() === "gain" ? 1 : (words[1].toLowerCase() === "lose" ? -1 : 0);
+						if (multiple != 0){
+							const amount = parseInt(words[2]);
+							if (!isNaN(amount) && amount > 0){
+								isDryLine = false;
+								lines[i] = "<span style='color:"+(multiple>0?"lightgreen":"red")+"'>"+lines[i]+"</span>";
+								lines[i]+= " <span style='color:grey'>&lt;-- The player will "+(multiple>0?"gain":"lose")+" "+(amount)+" health points upon entering this place</span>";
+								hpEvents.push(multiple * amount)
+							}								
+						}
+					}
+				}
 			}
 			if (isDryLine){
 				dryTextLines.push(lines[i]);
@@ -306,6 +325,7 @@ function parseText(){
 	return {
 		text: finalText,
 		props: objects,
+		hpEvents: hpEvents,
 		dryText: dryTextLines.join("\n"),
 		dryTitle: dryTitle,
 		isDeadEnd: isDeadEnd,
@@ -382,11 +402,12 @@ function post(payload, callback){
 		}
 		catch(e){
 			console.log(data);
+			console.log(e);
 			txt = "";
 			const parent = input.parentNode;
 			
 			const feedback = document.createElement("div");
-			feedback.innerHTML = "<span style='color:red;'><b>The server terminated the connection, possibly because of an error.</b><br>Please reload the page to reinitialize the connection.</span><p>If you're stuck somewhere, you can type RESET to transport yourself back to the forest outskirts.</p>";
+			feedback.innerHTML = "<span style='color:red;'><b>The server terminated the connection, possibly because of an error.</b><br>Please reload the page to reinitialize the connection.</span><p>If you're stuck somewhere, you can type FAINT to transport yourself back to the forest outskirts.</p>";
 			feedback.className = "feedback";
 			parent.appendChild(feedback);
 			return;
@@ -414,8 +435,17 @@ function interpretServerFeedback(data){
 	switch (data.type){
 		default: return data.content;
 		case "page":
+		case "death":
+		case "brief":
 			currentPage = data.content.id;
+			if (data.type === "brief"){
+				data.content.hp_events = [];
+			}
+			if (data.type === "death"){
+				data.content.isDeath = true;
+			}
 			return parsePage(data.content);
+			
 		case "props":
 			if (data.content.length < 1)
 				return "You have nothing on you.";
@@ -475,8 +505,16 @@ function parsePage(page){
 		formatPropLine(page.props[k].name, page.props[k].count)+
 		".</span>");
 	}
+		
+	for (k in page.hp_events){
+		lines.push(formatHPEventLine(page.hp_events[k]));
+	}
 	
-	return lines.join("<br>");
+	return (page.isDeath ? document.getElementById("death").innerHTML : "") + lines.join("<br>");
+}
+
+function formatHPEventLine(value){
+	return "<span style='color:"+(value > 0?"lightgreen":"red")+"'>You "+(value>0?"gain":"lose")+" "+Math.abs(value)+" health points.</span>";
 }
 
 function formatPropLine(name, count, isInventory=false){
