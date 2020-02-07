@@ -44,7 +44,7 @@ if (isset($_POST["action"])){
 
 function recover($db, $p, $player){
 	echo json_encode([
-		"type"=>$player["is_new"] ? "intro" : "page",
+		"type"=>$player["is_new"] ? "intro" : "brief",
 		"content"=>get_page($db, $player["location"], $player)
 	]);
 	exit;
