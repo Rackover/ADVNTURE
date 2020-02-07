@@ -17,16 +17,18 @@
 		<title>ADVNTURE.WEB</title>
 		<script type="text/javascript" src="res/scripts/communication.js?version=<?php echo rand();?>"></script>
 		  
-		  <meta property="og:title" content="ADVNTURE.WEB">
-		  <meta property="og:description" content="Take a part in the greatest of adventures: <br>Yours.">
-		  <meta property="og:image" content="/res/img/metapreview.jpg">
-		
-<meta name="twitter:card" content="summary" />
-<meta name="twitter:site" content="@Rackover" />
-<meta name="twitter:title" content="ADVNTURE.WEB" />
-<meta name="twitter:description" content="Take a part in the greatest of adventures: <br>Yours." />
-<meta name="twitter:image" content="https://advnture.louve.systems/res/img/metapreview.jpg" />
-<meta name="twitter:image:alt" content="Wilderness. Adventure." />
+		<meta property="og:title" content="ADVNTURE.WEB">
+		<meta property="og:description" content="Take part in the greatest of adventures: <br>Yours.">
+		<meta name="Description" content="Take part in the greatest of adventures: <br>Yours.<br>ADVNTURE is a game of free exploration and creation.<br>It has no restriction and is only made of what you, and other players, decide to pour into it.">
+		<meta property="og:image" content="/res/img/metapreview.jpg">
+		<meta name="google-site-verification" content="gT6MZWxw3_4XOJVslimPR2nWE8U3hLy-WDvtpW8sPTI" />
+	  
+		<meta name="twitter:card" content="summary" />
+		<meta name="twitter:site" content="@Rackover" />
+		<meta name="twitter:title" content="ADVNTURE.WEB" />
+		<meta name="twitter:description" content="Take part in the greatest of adventures: <br>Yours." />
+		<meta name="twitter:image" content="https://advnture.louve.systems/res/img/metapreview.jpg" />
+		<meta name="twitter:image:alt" content="Wilderness. Adventure." />
 			  
     </head>
 	<body>
