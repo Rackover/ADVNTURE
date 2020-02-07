@@ -333,6 +333,7 @@
               page.id AS page_id,
 			  page.is_dead_end,
 			  page.is_hidden,
+			  hp_event.hp_change,
 			  prop.name as prop_name,
 			  pp.count as prop_placement_count,
 			  page_succession.command,
@@ -350,6 +351,7 @@
 			  LEFT JOIN player player ON player.id = page.author_id
 			  LEFT JOIN client cli ON cli.id = player.client_id
               LEFT JOIN page otherpage ON (page_succession.origin_id = otherpage.id OR page_succession.target_id = otherpage.id) AND otherpage.id != page.id
+			  LEFT JOIN hp_event hp_event ON hp_event.page_id = page.id
 			WHERE
 			  page.id = ?
 		");
@@ -361,6 +363,7 @@
 		$author_id = "???";
 		$props = [];
 		$connections = [];
+		$hp_change = 0;
 		$page_content = "";
 		
 		while ($row = $statement->fetch()){
@@ -374,6 +377,9 @@
 			$is_dead_end = $row["is_dead_end"];
 			if ($row["prop_name"] != null){
 				$props[]= array("name"=>$row["prop_name"], "count"=>$row["prop_placement_count"]);
+			}
+			if ($row["hp_change"] != null){
+				$hp_change += $row["hp_change"];
 			}
 			if ($row["connected_page_id"] != null){
 				$connections []= array(
@@ -402,7 +408,9 @@
 		return_200("status", '
 				<b class="emphasis">'.$title.'</b> [<b style="color:yellow;">'.$id.'</b>]<br><i>'.$content.'</i><br>Made by <span style="color:white;">PLAYER id:<b style="color:yellow;">'.substr($author_id, 0, 6).'...</b></span> 
 				'.($is_client_banned ? "<span style='color:red;'>" : "").'('.($is_client_banned ? "BANNED " : "").'CLIENT id:<b style="color:yellow;">'.$client_id.'</b>)'.($is_client_banned ? "</span>" : "").'
-				<br><br><b>Props</b>: '.implode(", ", $strProps).'<br>
+				<br>
+				<br>Health change: '.$hp_change.'<br>
+				<br><b>Props</b>: '.implode(", ", $strProps).'<br>
 				<br><b>Connections</b>:
 				<ul>
 					'.$strConnections.'
