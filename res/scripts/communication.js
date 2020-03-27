@@ -490,6 +490,7 @@ function interpretServerFeedback(data){
 			
 		case "intro":
 			currentPage = data.content.id;
+			updateDimensionText(data.content.dimension_name, data.content.pages_count);
 			return document.getElementById("intro").innerHTML;
 			break;
 			
