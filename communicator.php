@@ -1,6 +1,5 @@
  <?php
- 
- 
+
  ini_set('display_errors', 1); 
  ini_set('display_startup_errors', 1); 
  error_reporting(E_ALL);
@@ -9,7 +8,6 @@
  session_set_cookie_params(PHP_INT_MAX-1); 
  
  session_start();
- 
  
 include_once "database.php";
 include_once "commands.php";
@@ -28,8 +26,7 @@ $actions = array(
 	"SUBMISSION"=>'receive_submission'
 );
 
-
-if (isset($_POST["action"])){
+if (isset($_POST["action"])){	
 	$action = $_POST["action"];
 	if ($db && isset($actions[$action])){
 		$actions[$action]($db, $_POST, $player);
@@ -43,9 +40,12 @@ if (isset($_POST["action"])){
 }
 
 function recover($db, $p, $player){
+	$content = get_page($db, $player["location"], $player);
+	$content["dimension_name"] = $player["dimension_name"];
+	$content["pages_count"] = get_page_count_in_dimension($db, $player["dimension"]);
 	echo json_encode([
-		"type"=>$player["is_new"] ? "intro" : "brief",
-		"content"=>get_page($db, $player["location"], $player)
+		"type"=>$player["is_new"] ? "intro" : "recovery",
+		"content"=>$content
 	]);
 	exit;
 }

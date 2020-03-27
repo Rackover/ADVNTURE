@@ -1,6 +1,34 @@
 <?php
 
-define("STARTING_PAGE", 1);
+function get_starting_page_id_for_player($db, $player){
+	$statement = $db->prepare(
+		"SELECT starting_page FROM dimension 
+		WHERE id=?");
+	$statement->execute([$player["dimension"]]);
+	$id = $statement->fetch()["starting_page"];
+
+	return $id;
+}
+
+function get_starting_page_id_for_dimension($db, $dimension_id){
+	$statement = $db->prepare(
+		"SELECT starting_page FROM dimension 
+		WHERE id=?");
+	$statement->execute([$dimension_id]);
+	$id = $statement->fetch()["starting_page"];
+
+	return $id;
+}
+
+function get_starting_page_id($db){
+	$statement = $db->prepare(
+		"SELECT starting_page FROM dimension 
+		WHERE initial=1");
+	$statement->execute();
+	$id = $statement->fetch()["starting_page"];
+
+	return $id;
+}
 
 function get_page($db, $id, $player){
 	$statement = $db->prepare("
@@ -14,7 +42,8 @@ function get_page($db, $id, $player){
 		  pp.count,
 		  page.is_dead_end,
 		  page.is_hidden,
-		  hp_event.hp_change
+		  hp_event.hp_change,
+		  hp_event.id
 		FROM
 		  page
 		  LEFT JOIN page_succession ps ON ps.origin_id = page.id OR ps.target_id = page.id
@@ -86,9 +115,12 @@ function get_page($db, $id, $player){
 	}
 	
 	// HP Event
+	$hpEventsDone = [];
 	foreach($result as $he){
 		if ($he["hp_change"] === null) continue;
+		if (in_array($he["id"], $hpEventsDone)) continue;
 		$page["hp_events"][] = $he["hp_change"]; 
+		$hpEventsDone[] = $he["id"];
 	}
 
 	// Outputs
@@ -133,13 +165,7 @@ function receive_submission($db, $p, $player){
 			// ???
 			// Might just be a place with objects/hpevents but without a description...
 			// Sucks but technically not illegal
-			
-			/*
-			header('HTTP/1.0 400 Bad Request');
-			echo json_encode(["type"=>"error","content"=>"ERR 400: Bad request"]);
-			exit;
-			*/
-			
+						
 			header('HTTP/1.0 400 Bad Request');
 			echo json_encode(["type"=>"error","content"=>"Not enough was known about this place, and so it never really set in as an interesting location.<br>You decide to turn around and go back to where you came from."]);
 			exit;
@@ -225,7 +251,7 @@ function receive_submission($db, $p, $player){
 	/// Process submission
 	
 	// Page
-	$statement = $db->prepare("INSERT INTO page (author_id, content, is_hidden, hidden_because, is_dead_end) VALUES (?, ?, ".intval($hide).", ?, ".intval($submission["isDeadEnd"]).")");
+	$statement = $db->prepare("INSERT INTO page (author_id, content, is_hidden, hidden_because, is_dead_end, dimension_id) VALUES (?, ?, ".intval($hide).", ?, ".intval($submission["isDeadEnd"]).", ".intval($player["dimension"]).")");
 	$statement->execute([$player["id"], trim($submission["dryTitle"])."\n".trim($submission["dryText"]), $hideReason]);
 	$pageId = $db->lastInsertId();
 	
@@ -303,8 +329,14 @@ function get_page_count($db){
 	return ($st->fetch())["count"];
 }
 
-function get_all_page_names($db){
-	$st = $db->prepare("SELECT content FROM page WHERE is_dead_end=0 AND is_hidden=0");
+function get_page_count_in_dimension($db, $dim_id=1){
+	$st = $db->prepare("SELECT COUNT(*) AS count FROM page WHERE is_hidden=0 AND is_dead_end=0 AND dimension_id=?");
+	$st->execute([$dim_id]);
+	return ($st->fetch())["count"];
+}
+
+function get_all_page_names($db, $dimension_id){
+	$st = $db->prepare("SELECT content FROM page WHERE is_dead_end=0 AND is_hidden=0 AND dimension_id=".$dimension_id);
 	$titles = [];
 	$st->execute();
 	$pages = $st->fetchAll();

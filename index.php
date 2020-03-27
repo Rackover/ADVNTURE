@@ -1,13 +1,3 @@
-<?php 
- ini_set('display_errors', 1); 
- ini_set('display_startup_errors', 1); 
- error_reporting(E_ALL);
- 
-	include("database.php");
-	include("page.php");
-	$count = get_page_count(get_connection());
-?>
-
 <!doctype html>
 <html lang="en">
 	<head>
@@ -35,10 +25,10 @@
 		<div id="mainContainer">
 			<div id="title">
 				<h1>
-					ADVNTURE V1.2
+					ADVNTURE V1.3
 				</h1>
 				<h2>
-					An official sequel to EXPLORER - host to <?php echo $count; ?> places
+					An official sequel to EXPLORER<span style="float:right;" id="dimensionInfo"></span> 
 				</h2>
 			</div>
 			<div class="terminal">
@@ -94,6 +84,9 @@
 					<li>- <b>USE &lt;object&gt;</b>: Uses an object at your current location.</li>
 					<li>- <b>INVENTORY</b>: Tells you what objects you currently have.</li>
 					<li>- <b>STATUS</b>: Tells you how you currently feel.</li>
+					<li></li>
+					<li>- <b>REGIONS</b>: List the available regions to explore</li>
+					<li>- <b>WARP &lt;region&gt;</b>: Teleport you to another region</li>
 				</ul>
 				<ul style="list-style: none; color:grey;">
 					<li>- <b>CLEAR</b>: Clears the console.</li>
@@ -101,6 +94,14 @@
 					<li>- <b>CREDITS</b>: Prints the credits.</li>
 					<li>- <b>HELP</b>: Prints this message.</li>
 				</ul>
+			</div>
+			<div id="warp" style="display:none;">
+				<p>
+					You focus your ADVNTURER power to transport yourself into another region. The Great Wind rises and lifts you off the ground, carrying you beyond the horizon.
+				</p>
+				<p>
+					When you open your eyes, you are in <b class="emphasis">%dimension</b>.
+				</p>
 			</div>
 			<div id="credits" style="display:none;">
 				<h1>Credits</h1>

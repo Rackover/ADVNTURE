@@ -33,7 +33,7 @@ function get_player($db, $new=false){
 	if (isset($_SESSION["playerId"])){
 		$playerId = $_SESSION["playerId"];
 	}
-	
+
 	$statement = $db->prepare("
 		SELECT
 		  player.page_id,
@@ -41,15 +41,20 @@ function get_player($db, $new=false){
 		  player_prop.original_page_id,
 		  player_prop.id AS player_prop_id,
 		  player.hp,
-		  prop.name
+		  prop.name,
+		  page.dimension_id AS dimension_id,
+		  dimension.name AS dimension_name
 		FROM
 		  player
 		  LEFT JOIN player_prop player_prop ON player.id = player_prop.player_id
 		  LEFT JOIN prop prop ON player_prop.prop_id = prop.id
+		  LEFT JOIN page page ON page.id = player.page_id
+		  LEFT JOIN dimension dimension ON page.dimension_id = dimension.id
 		WHERE
-		  player.id=".($db->quote($playerId))."
+		  player.id=?
 	");
-	$statement->execute([ $ip ]);
+	$statement->execute([ $playerId ]);
+
 	$result = $statement->fetchAll();
 	
 	if ($result === false || count($result) === 0){
@@ -66,8 +71,11 @@ function get_player($db, $new=false){
 			"client_id"=>$client["id"],
 			"client_address"=>$ip,
 			"is_new"=>$new,
-			"hp"=>$result[0]["hp"]
+			"hp"=>$result[0]["hp"],
+			"dimension"=>$result[0]["dimension_id"],
+			"dimension_name"=>$result[0]["dimension_name"]
 		);
+
 		foreach($result as $row){
 			if ($row["prop_id"] === null) continue;
 			$player["props"] []= [
@@ -91,8 +99,9 @@ function player_lose_object($db, $player_id, $object_id){
 }
 
 function create_player($db, $clientId, $playerId){
+	$starting_page = get_starting_page_id($db);
 	$statement = $db->prepare("INSERT IGNORE INTO player (id, client_id, page_id) VALUES (?, ?, ?)");
-	$statement->execute([ $playerId, $clientId, STARTING_PAGE."" ]);
+	$statement->execute([ $playerId, $clientId, $starting_page."" ]);
 }
 
 function is_full_inventory($player){

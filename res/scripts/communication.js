@@ -7,6 +7,7 @@ let editorDirection = "";
 let editorExistingPages = [];
 let currentPage = 1;
 let lastCommand = "";
+let dimensionName = "";
 
 const maxNumberOfCharacters = 256; // I suggest you do not try to change that.
 const allowedChars = ':;,!?.azertyuiopqsdfghjklmwxcvbnAZERTYUIOPQSDFGHJKLMWXCVBN&()-"\'$1234567890⠀';
@@ -422,8 +423,11 @@ function postAjax(url, data, success) {
 
 	var xhr = window.XMLHttpRequest ? new XMLHttpRequest() : new ActiveXObject("Microsoft.XMLHTTP");
 	xhr.open('POST', url);
+
 	xhr.onreadystatechange = function() {
-		if (xhr.readyState>3) { success(xhr.responseText); }
+		if (xhr.readyState>3) {
+			success(xhr.responseText); 
+		}
 	};
 	xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
 	xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
@@ -437,12 +441,20 @@ function interpretServerFeedback(data){
 		case "page":
 		case "death":
 		case "brief":
+		case "recovery":
+		case "warp":
 			currentPage = data.content.id;
-			if (data.type === "brief"){
+			if (data.type === "brief" || data.type === "recovery"){
 				data.content.hp_events = [];
 			}
 			if (data.type === "death"){
 				data.content.isDeath = true;
+			}
+			if (data.type === "warp" || data.type === "recovery"){
+				data.content.updateDimension = true;
+			}
+			if (data.type === "warp"){
+				data.content.isWarp = true;
 			}
 			return parsePage(data.content);
 			
@@ -509,8 +521,19 @@ function parsePage(page){
 	for (k in page.hp_events){
 		lines.push(formatHPEventLine(page.hp_events[k]));
 	}
+
+	if (page.updateDimension){
+		updateDimensionText(page.dimension_name, page.pages_count);
+	}
 	
-	return (page.isDeath ? document.getElementById("death").innerHTML : "") + lines.join("<br>");
+	return (page.isDeath ? document.getElementById("death").innerHTML : "") 
+	+ (page.isWarp ? document.getElementById("warp").innerHTML.replace("%dimension", initialUpperCase(page.dimension_name)) : "") 
+	+ lines.join("<br>");
+}
+
+function updateDimensionText(name, count){
+	dimensionName = name;
+	document.getElementById("dimensionInfo").textContent = "Currently exploring region "+name+" ("+count+" places)";
 }
 
 function formatHPEventLine(value){
@@ -555,6 +578,10 @@ function detectmob() {
  else {
     return false;
   }
+}
+
+function initialUpperCase(str){
+	return str.substring(0, 1).toUpperCase() + str.substring(1).toLowerCase();
 }
 
 initialize();
