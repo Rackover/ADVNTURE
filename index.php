@@ -4,10 +4,10 @@
 		<meta charset="utf-8" />
 		<LINK href="style.css?version=<?php echo rand();?>" rel="stylesheet" type="text/css">
 		<link rel="icon" href="res/img/favicon.png" />
-		<title>ADVNTURE.WEB</title>
+		<title>ADVNTURE</title>
 		<script type="text/javascript" src="res/scripts/communication.js?version=<?php echo rand();?>"></script>
 		  
-		<meta property="og:title" content="ADVNTURE.WEB">
+		<meta property="og:title" content="ADVNTURE">
 		<meta property="og:description" content="Take part in the greatest of adventures: <br>Yours.">
 		<meta name="Description" content="Take part in the greatest of adventures: <br>Yours.<br>ADVNTURE is a game of free exploration and creation.<br>It has no restriction and is only made of what you, and other players, decide to pour into it.">
 		<meta property="og:image" content="/res/img/metapreview.jpg">
@@ -15,7 +15,7 @@
 	  
 		<meta name="twitter:card" content="summary" />
 		<meta name="twitter:site" content="@Rackover" />
-		<meta name="twitter:title" content="ADVNTURE.WEB" />
+		<meta name="twitter:title" content="ADVNTURE" />
 		<meta name="twitter:description" content="Take part in the greatest of adventures: <br>Yours." />
 		<meta name="twitter:image" content="https://advnture.louve.systems/res/img/metapreview.jpg" />
 		<meta name="twitter:image:alt" content="Wilderness. Adventure." />
@@ -25,11 +25,8 @@
 		<div id="mainContainer">
 			<div id="title">
 				<h1>
-					ADVNTURE V1.3
+					<span style='color:grey;'>LOUVESYSTEMS'</span> <b>ADVNTURE</b> <span style='color:grey;'>V1.3.0<span style="float:right;" id="dimensionInfo"></span></span>
 				</h1>
-				<h2>
-					An official sequel to EXPLORER<span style="float:right;" id="dimensionInfo"></span> 
-				</h2>
 			</div>
 			<div class="terminal">
 				<div id="input">
@@ -38,13 +35,13 @@
 			</div>
 			<div style="margin-top:5px;display:flex;flex-direction:row;width:100%; justify-content:space-between;font-size:0.8em;">
 				<div style="text-align:left;">
-					Made by louve@louve.systems
+                    Join the <a style="color:white;" target="_blank" href="https://discord.gg/WQWZBN3">DISCORD</a>!
 				</div>
 				<div>
 					Here's a <a style="color:white;" target="_blank" href="https://www.youtube.com/watch?v=QIxRDU_l8Bc&loop=1">fitting soundtrack</a> if you need one! 	
 				</div>
 				<div style="text-align:right;">
-					Follow me on <a style="color:white;" target="_blank" href="https://twitter.com/Rackover">twitter</a>!
+					Follow me on <a style="color:white;" target="_blank" href="https://twitter.com/Rackover">TWITTER</a>!
 				</div>
 			</div>
 			
@@ -84,11 +81,10 @@
 					<li>- <b>USE &lt;object&gt;</b>: Uses an object at your current location.</li>
 					<li>- <b>INVENTORY</b>: Tells you what objects you currently have.</li>
 					<li>- <b>STATUS</b>: Tells you how you currently feel.</li>
-					<li></li>
-					<li>- <b>REGIONS</b>: List the available regions to explore</li>
-					<li>- <b>WARP &lt;region&gt;</b>: Teleport you to another region</li>
 				</ul>
 				<ul style="list-style: none; color:grey;">
+					<li>- <b>REGIONS</b>: List the available regions to explore</li>
+					<li>- <b>WARP &lt;region&gt;</b>: Teleport you to another region</li>
 					<li>- <b>CLEAR</b>: Clears the console.</li>
 					<li>- <b>INTRO</b>: Prints the welcome message.</li>
 					<li>- <b>CREDITS</b>: Prints the credits.</li>

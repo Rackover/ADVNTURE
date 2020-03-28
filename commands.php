@@ -81,10 +81,11 @@
             $player["hp"] = min($player["hp"], MAX_HP);
                 
             if ($player["hp"] <= 0){
-                $db->prepare("UPDATE player SET page_id=? WHERE id=?")->execute([get_starting_page($player)."", $player["id"]]);    // First page (ID:1)
+                $firstPage = get_starting_page_id_for_player($db, $player);
+                $db->prepare("UPDATE player SET page_id=? WHERE id=?")->execute([$firstPage."", $player["id"]]);    
                 $db->prepare("UPDATE player SET hp=? WHERE id=?")->execute([BASE_HP, $player["id"]]);    
                 $db->prepare("DELETE FROM player_prop WHERE player_id=?")->execute([$player["id"]]);
-                $newPage = get_page($db, get_starting_page($player), $player["id"]);
+                $newPage = get_page($db, $firstPage, $player);
                 return_200("death", $newPage);
             }
             else if ($change != 0){
@@ -106,7 +107,7 @@
             $readonly = $state->fetch()["readonly"];
 
             if ($readonly){
-                return_200("status", "This region is history - and history may not be rewritten.");
+                return_200("status", "This region is history - and history may not be rewritten.<br>Use the WARP command to warp to an unexplored region.");
             }
             else{
                 $existingPages = get_all_page_names($db, $player["dimension"]);
@@ -281,7 +282,7 @@
     
     function command_reset($db, $elements, $player){
         $db->prepare("UPDATE player SET page_id=? WHERE id=?")->execute([get_starting_page($player)."", $player["id"]]);
-        $page = get_page($db, get_starting_page($player), $player);
+        $page = get_page($db, get_starting_page_id_for_player($db, $player), $player);
         return_200("page", $page);
     }
     
@@ -291,6 +292,9 @@
     }
 
     function command_warp($db, $elements, $player){
+        if (count($elements) < 1){
+            return_200("status", "What region do you wish to visit? (Type REGIONS to get a list of regions.)");
+        }
         $dimName = $elements[0];              
         $state = $db->prepare("SELECT id,name FROM dimension WHERE name=?");
         $state->execute([$dimName]);

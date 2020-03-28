@@ -1,11 +1,11 @@
 -- phpMyAdmin SQL Dump
--- version 4.6.6deb5
+-- version 4.6.6deb4
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: Feb 07, 2020 at 03:46 PM
--- Server version: 5.7.29-0ubuntu0.18.04.1
--- PHP Version: 7.2.24-0ubuntu0.18.04.2
+-- Generation Time: Mar 28, 2020 at 09:04 PM
+-- Server version: 10.1.38-MariaDB-0+deb9u1
+-- PHP Version: 7.0.33-0+deb9u6
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 SET time_zone = "+00:00";
@@ -19,8 +19,6 @@ SET time_zone = "+00:00";
 --
 -- Database: `adventure`
 --
-CREATE DATABASE IF NOT EXISTS `adventure` DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci;
-USE `adventure`;
 
 -- --------------------------------------------------------
 
@@ -28,15 +26,28 @@ USE `adventure`;
 -- Table structure for table `client`
 --
 
-DROP TABLE IF EXISTS `client`;
-CREATE TABLE IF NOT EXISTS `client` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
+CREATE TABLE `client` (
+  `id` int(11) NOT NULL,
   `address` varchar(32) NOT NULL,
   `is_banned` tinyint(1) NOT NULL,
-  `ban_reason` text,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `address` (`address`)
-) ENGINE=InnoDB AUTO_INCREMENT=609 DEFAULT CHARSET=utf8;
+  `ban_reason` text NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `dimension`
+--
+
+CREATE TABLE `dimension` (
+  `id` int(11) NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `readonly` tinyint(1) NOT NULL DEFAULT '1',
+  `initial` tinyint(1) NOT NULL DEFAULT '0',
+  `starting_page` int(11) NOT NULL,
+  `creation` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `last_update` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
@@ -44,13 +55,10 @@ CREATE TABLE IF NOT EXISTS `client` (
 -- Table structure for table `hp_event`
 --
 
-DROP TABLE IF EXISTS `hp_event`;
-CREATE TABLE IF NOT EXISTS `hp_event` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
+CREATE TABLE `hp_event` (
+  `id` int(11) NOT NULL,
   `page_id` int(11) NOT NULL,
-  `hp_change` int(11) NOT NULL,
-  PRIMARY KEY (`id`),
-  KEY `page_id` (`page_id`)
+  `hp_change` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
@@ -59,20 +67,17 @@ CREATE TABLE IF NOT EXISTS `hp_event` (
 -- Table structure for table `page`
 --
 
-DROP TABLE IF EXISTS `page`;
-CREATE TABLE IF NOT EXISTS `page` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
+CREATE TABLE `page` (
+  `id` int(11) NOT NULL,
   `author_id` varchar(64) NOT NULL,
   `content` varchar(257) NOT NULL,
   `is_hidden` tinyint(1) NOT NULL,
   `hidden_because` text NOT NULL,
   `is_dead_end` tinyint(1) NOT NULL,
+  `dimension_id` int(11) NOT NULL DEFAULT '1',
   `creation` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `last_update` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  KEY `author_id` (`author_id`),
-  KEY `author_id_2` (`author_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=299 DEFAULT CHARSET=utf8;
+  `last_update` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
@@ -80,16 +85,12 @@ CREATE TABLE IF NOT EXISTS `page` (
 -- Table structure for table `page_succession`
 --
 
-DROP TABLE IF EXISTS `page_succession`;
-CREATE TABLE IF NOT EXISTS `page_succession` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
+CREATE TABLE `page_succession` (
+  `id` int(11) NOT NULL,
   `origin_id` int(11) NOT NULL,
   `target_id` int(11) NOT NULL,
-  `command` varchar(255) NOT NULL,
-  PRIMARY KEY (`id`),
-  KEY `page_succession_ibfk_1` (`origin_id`),
-  KEY `page_succession_ibfk_2` (`target_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=352 DEFAULT CHARSET=utf8;
+  `command` varchar(255) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
@@ -97,15 +98,11 @@ CREATE TABLE IF NOT EXISTS `page_succession` (
 -- Table structure for table `player`
 --
 
-DROP TABLE IF EXISTS `player`;
-CREATE TABLE IF NOT EXISTS `player` (
+CREATE TABLE `player` (
   `id` varchar(64) NOT NULL,
   `page_id` int(11) NOT NULL,
   `client_id` int(11) NOT NULL,
-  `hp` tinyint(4) NOT NULL DEFAULT '10',
-  PRIMARY KEY (`id`),
-  KEY `client_id` (`client_id`),
-  KEY `player_ibfk_1` (`page_id`)
+  `hp` tinyint(255) UNSIGNED NOT NULL DEFAULT '10'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
@@ -114,17 +111,12 @@ CREATE TABLE IF NOT EXISTS `player` (
 -- Table structure for table `player_prop`
 --
 
-DROP TABLE IF EXISTS `player_prop`;
-CREATE TABLE IF NOT EXISTS `player_prop` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
+CREATE TABLE `player_prop` (
+  `id` int(11) NOT NULL,
   `player_id` varchar(64) NOT NULL,
   `prop_id` int(11) NOT NULL,
-  `original_page_id` int(11) NOT NULL,
-  PRIMARY KEY (`id`),
-  KEY `prop_id` (`prop_id`),
-  KEY `player_prop_ibfk_4` (`player_id`),
-  KEY `player_prop_ibfk_3` (`original_page_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=903 DEFAULT CHARSET=utf8;
+  `original_page_id` int(11) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
@@ -132,13 +124,10 @@ CREATE TABLE IF NOT EXISTS `player_prop` (
 -- Table structure for table `prop`
 --
 
-DROP TABLE IF EXISTS `prop`;
-CREATE TABLE IF NOT EXISTS `prop` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `name` varchar(96) DEFAULT NULL,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `name` (`name`)
-) ENGINE=InnoDB AUTO_INCREMENT=103 DEFAULT CHARSET=utf8;
+CREATE TABLE `prop` (
+  `id` int(11) NOT NULL,
+  `name` varchar(96) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
@@ -146,16 +135,12 @@ CREATE TABLE IF NOT EXISTS `prop` (
 -- Table structure for table `prop_placement`
 --
 
-DROP TABLE IF EXISTS `prop_placement`;
-CREATE TABLE IF NOT EXISTS `prop_placement` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
+CREATE TABLE `prop_placement` (
+  `id` int(11) NOT NULL,
   `prop_id` int(11) NOT NULL,
   `page_id` int(11) NOT NULL,
-  `count` int(11) NOT NULL DEFAULT '1',
-  PRIMARY KEY (`id`),
-  KEY `prop_placement_ibfk_1` (`prop_id`),
-  KEY `page_id` (`page_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=110 DEFAULT CHARSET=utf8;
+  `count` int(11) NOT NULL DEFAULT '1'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
@@ -163,18 +148,151 @@ CREATE TABLE IF NOT EXISTS `prop_placement` (
 -- Table structure for table `word_blacklist`
 --
 
-DROP TABLE IF EXISTS `word_blacklist`;
-CREATE TABLE IF NOT EXISTS `word_blacklist` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
+CREATE TABLE `word_blacklist` (
+  `id` int(11) NOT NULL,
   `word` varchar(64) NOT NULL,
-  `gravity` int(11) NOT NULL DEFAULT '1',
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `word` (`word`)
-) ENGINE=InnoDB AUTO_INCREMENT=892 DEFAULT CHARSET=utf8;
+  `gravity` int(11) NOT NULL DEFAULT '1'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
+--
+-- Indexes for dumped tables
+--
+
+--
+-- Indexes for table `client`
+--
+ALTER TABLE `client`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `address` (`address`);
+
+--
+-- Indexes for table `dimension`
+--
+ALTER TABLE `dimension`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `starting_page` (`starting_page`);
+
+--
+-- Indexes for table `hp_event`
+--
+ALTER TABLE `hp_event`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `page_id` (`page_id`);
+
+--
+-- Indexes for table `page`
+--
+ALTER TABLE `page`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `author_id` (`author_id`),
+  ADD KEY `author_id_2` (`author_id`),
+  ADD KEY `page_ibfk_1` (`dimension_id`);
+
+--
+-- Indexes for table `page_succession`
+--
+ALTER TABLE `page_succession`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `page_succession_ibfk_1` (`origin_id`),
+  ADD KEY `page_succession_ibfk_2` (`target_id`);
+
+--
+-- Indexes for table `player`
+--
+ALTER TABLE `player`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `client_id` (`client_id`),
+  ADD KEY `player_ibfk_1` (`page_id`);
+
+--
+-- Indexes for table `player_prop`
+--
+ALTER TABLE `player_prop`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `prop_id` (`prop_id`),
+  ADD KEY `player_prop_ibfk_4` (`player_id`),
+  ADD KEY `player_prop_ibfk_3` (`original_page_id`);
+
+--
+-- Indexes for table `prop`
+--
+ALTER TABLE `prop`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `name` (`name`);
+
+--
+-- Indexes for table `prop_placement`
+--
+ALTER TABLE `prop_placement`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `prop_placement_ibfk_1` (`prop_id`),
+  ADD KEY `page_id` (`page_id`);
+
+--
+-- Indexes for table `word_blacklist`
+--
+ALTER TABLE `word_blacklist`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `word` (`word`);
+
+--
+-- AUTO_INCREMENT for dumped tables
+--
+
+--
+-- AUTO_INCREMENT for table `client`
+--
+ALTER TABLE `client`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=533;
+--
+-- AUTO_INCREMENT for table `dimension`
+--
+ALTER TABLE `dimension`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+--
+-- AUTO_INCREMENT for table `hp_event`
+--
+ALTER TABLE `hp_event`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+--
+-- AUTO_INCREMENT for table `page`
+--
+ALTER TABLE `page`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=277;
+--
+-- AUTO_INCREMENT for table `page_succession`
+--
+ALTER TABLE `page_succession`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=327;
+--
+-- AUTO_INCREMENT for table `player_prop`
+--
+ALTER TABLE `player_prop`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=731;
+--
+-- AUTO_INCREMENT for table `prop`
+--
+ALTER TABLE `prop`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=97;
+--
+-- AUTO_INCREMENT for table `prop_placement`
+--
+ALTER TABLE `prop_placement`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=103;
+--
+-- AUTO_INCREMENT for table `word_blacklist`
+--
+ALTER TABLE `word_blacklist`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=453;
 --
 -- Constraints for dumped tables
 --
+
+--
+-- Constraints for table `dimension`
+--
+ALTER TABLE `dimension`
+  ADD CONSTRAINT `dimension_ibfk_1` FOREIGN KEY (`starting_page`) REFERENCES `page` (`id`);
 
 --
 -- Constraints for table `hp_event`
@@ -186,7 +304,8 @@ ALTER TABLE `hp_event`
 -- Constraints for table `page`
 --
 ALTER TABLE `page`
-  ADD CONSTRAINT `page_ibfk_1` FOREIGN KEY (`author_id`) REFERENCES `player` (`id`) ON DELETE CASCADE;
+  ADD CONSTRAINT `page_ibfk_1` FOREIGN KEY (`dimension_id`) REFERENCES `dimension` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `page_ibfk_2` FOREIGN KEY (`author_id`) REFERENCES `player` (`id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `page_succession`
