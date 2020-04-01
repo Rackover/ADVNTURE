@@ -513,12 +513,20 @@ function parsePage(page){
 		lines.push(elements[i]);
 	}
 		
+    // Props
+    if (page.props.length > 0){
+        lines.push("");
+    }
 	for (k in page.props){
 		lines.push("<span class='object'>"+
 		formatPropLine(page.props[k].name, page.props[k].count)+
 		".</span>");
 	}
 		
+    // HP Events
+    if (page.hp_events.length > 0){
+        lines.push("");
+    }
 	for (k in page.hp_events){
 		lines.push(formatHPEventLine(page.hp_events[k]));
 	}

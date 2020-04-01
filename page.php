@@ -210,7 +210,7 @@ function receive_submission($db, $p, $player){
 	
 	// Check for red flags
 	$words = array_merge(
-		explode(" ", $submission["dryText"]), 
+		explode(" ", str_replace('"', "", $submission["dryText"])), 
 		explode(" ", str_replace("\n", "", $submission["dryTitle"])), 
 		$props
 	);

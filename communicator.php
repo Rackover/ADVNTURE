@@ -4,8 +4,11 @@
  ini_set('display_startup_errors', 1); 
  error_reporting(E_ALL);
  
- ini_set('session.gc_maxlifetime', PHP_INT_MAX-1);
- session_set_cookie_params(PHP_INT_MAX-1); 
+ ini_set('session.gc_probability', 0);
+ ini_set('session.gc_maxlifetime', 315360000);
+ ini_set('session.cookie_lifetime', 315360000);
+ ini_set('session.use_cookies', 1);
+ ini_set('session.use_only_cookies', 1);
  
  session_start();
  

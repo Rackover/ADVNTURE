@@ -384,7 +384,7 @@
     
     function command_get_author_of($db, $elements, $player){    
         if (!isset($_SESSION["isAdmin"]) || !$_SESSION["isAdmin"]) close_connection_wrong_command("PAGEINFO");
-        if (count($elements) < 1 || !intval($elements[0])) return_200("status", "Invalid page ID supplied");
+        if (count($elements) < 1 || !intval($elements[0])) $elements = array($player["location"]);
         $id = $elements[0];
         
         $statement = $db->prepare("
@@ -511,13 +511,17 @@
     $state->execute([$name."\n%"]);
     $data = $state->fetch();
     if ($data === false){
-        return_200("status", "No such page as ".$name);
+        if (count($elements) > 0 && intval($elements[0])){
+            $data = array("id"=> $elements[0]);
+        }
+        else{
+            return_200("status", "No such page as ".$name);
+        }
     }
-    else{
-        $page = get_page($db, $data["id"], $player);
-        $db->prepare("UPDATE player SET page_id=? WHERE id=?")->execute([$data["id"], $player["id"]]);
-        return_200("page", $page);
-    }
+    
+    $page = get_page($db, $data["id"], $player);
+    $db->prepare("UPDATE player SET page_id=? WHERE id=?")->execute([$data["id"], $player["id"]]);
+    return_200("page", $page);
   }
   
   function command_ban_client($db, $elements, $player){
