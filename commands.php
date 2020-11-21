@@ -85,8 +85,7 @@
                 $db->prepare("UPDATE player SET page_id=? WHERE id=?")->execute([$firstPage."", $player["id"]]);    
                 $db->prepare("UPDATE player SET hp=? WHERE id=?")->execute([BASE_HP, $player["id"]]);    
                 $db->prepare("DELETE FROM player_prop WHERE player_id=?")->execute([$player["id"]]);
-                $newPage = get_page($db, $firstPage, $player);
-                return_200("death", $newPage);
+                return_200("death", array_merge(get_page($db, $firstPage, $player), ["death_page"=>$newPage]));
             }
             else if ($change != 0){
                 $db->prepare("UPDATE player SET hp=? WHERE id=?")->execute([$player["hp"], $player["id"]]);
@@ -156,7 +155,7 @@
     
     function command_suicide($db, $elements, $player){
         $startID = get_starting_page_id_for_player($db, $player);
-        $db->prepare("UPDATE player SET page_id=? WHERE id=?")->execute([$startID, $player["id"]]);    // First page (ID:1)
+        $db->prepare("UPDATE player SET page_id=? WHERE id=?")->execute([$startID, $player["id"]]);   
         $db->prepare("UPDATE player SET hp=? WHERE id=?")->execute([BASE_HP, $player["id"]]);    
         $db->prepare("DELETE FROM player_prop WHERE player_id=?")->execute([$player["id"]]);
         return_200("death", get_page($db, $startID, $player));

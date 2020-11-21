@@ -238,39 +238,87 @@ function clearConsole(){
 	}
 }
 
-function parseText(){
-	const lines = txt.split("\n");
+function splitManually(text, characters){
+	let lines = [];
+	let builder = "";
 	
+	for(ci in text){
+		const character = text[ci];
+			
+		if (characters.indexOf(character) > -1){
+			lines.push({ character:character, content:builder});
+			builder = "";
+		}
+		else{
+			builder += character;
+		}
+	}	
+	
+	lines.push({ character:"\n", content:builder});
+	
+	return lines;
+}
+
+function joinManually(splitText, replaceLineBreaks = true){
+
+	let builder = "";
+	for(segmentIndex in splitText){
+		const segment = splitText[segmentIndex];
+		builder += segment.content;
+		
+		if (segmentIndex < splitText.length-1){
+			builder += (replaceLineBreaks && segment.character == "\n" ? "<br>" : segment.character);
+		}
+	}
+	
+	return builder;
+}
+
+function parseText(){
+	// First line has to be a line break
+	let components = txt.split('\n');
+	const presumedTitle = components.shift();
+	const headlessText = txt.length === 0 ? "" : components.join('\n');
+	
+	let splitLines;
+	if (headlessText.length > 0){
+		splitLines = splitManually(headlessText, '\n.');
+		splitLines.unshift({content: presumedTitle, character: "\n"});
+	}
+	else{
+		splitLines = [{content: presumedTitle, character: "\n"}];
+	}
+
 	let objects = {};
 	let isDeadEnd = false;
 	let isShortCut = false
 	let dryTextLines = [];
-	let dryTitle = lines[0];
+	const dryTitle = splitLines[0].content;
 	let hpEvents = []
 	
 	if (isInEditor){
-		if (lines.length <= 1 || (lines.length === 2 && lines[1].length === 0)){
-			const existing = isExistingPage(lines[0]);
+		if (splitLines.length <= 1 || (splitLines.length === 2 && splitLines[1].content.length === 0)){
+			const existing = isExistingPage(dryTitle);
 			if (existing){
-				lines[0] = "<span style='color:white'><u>"+lines[0]+"</u></span> <span style='color:grey'>&lt;-- This will be a shortcut to '"+existing+"'</span>";
+				splitLines[0].content = "<span style='color:white'><u>"+dryTitle+"</u></span> <span style='color:grey'>&lt;-- This will be a shortcut to '"+existing+"'</span>";
 				isShortCut = true;
 			}
 			else{
-				lines[0] = "<span style='color:grey'>"+lines[0]+""+(lines[0].length === 0 ? "" : " <i>(dead end)</i></span>");
+				splitLines[0].content = "<span style='color:grey'>"+dryTitle+(dryTitle.length === 0 ? "" : " <i>(dead end)</i></span>");
 				isDeadEnd = true;
 			}
 		}
 		else{
-			lines[0] = "<b>"+lines[0]+"</b> <span style='color:grey'>&lt;-- This will be the name of that place</span>";
+			splitLines[0].content = "<b>"+dryTitle+"</b> <span style='color:grey'>&lt;-- This will be the name of that place</span>";
 		}
 		
-		for (let i=1; i< lines.length; i++){
-			const words = lines[i].split(" ");
+		for (let i=1; i< splitLines.length; i++){
+			const words = splitLines[i].content.trim().split(" ");
 			let isDryLine = true;
 			if (words.length >= 4){
 				if (words[0].toLowerCase() === "there"){
 					if (words[1] === "is"){
-						lines[i] = "<span class='object'>"+lines[i]+"</span>";
+						splitLines[i].content = "<span class='object'>"+splitLines[i].content+"</span>";
 					
 						objectName = words.slice(3).join(" ");
 						
@@ -281,11 +329,11 @@ function parseText(){
 						objects[objectName] = 1;
 						isDryLine = false;
 						
-						lines[i]+= " <span style='color:grey'>&lt;-- The "+objectName+" will be a pickable object</span>";
+						splitLines[i].content+= " <span style='color:grey'>&lt;-- The "+objectName+" will be a pickable object</span>";
 					}
 					else if (words[1] === "are"){
 						if (!isNaN(parseInt(words[2]))){
-							lines[i] = "<span class='object'>"+lines[i]+"</span>";
+							splitLines[i].content = "<span class='object'>"+splitLines[i].content+"</span>";
 							objectName = words.slice(3).join(" ");
 							
 							// Removing trailing . and trailing plural s
@@ -297,7 +345,7 @@ function parseText(){
 							objects[objectName] = parseInt(words[2]);
 							isDryLine = false;
 							
-							lines[i]+= " <span style='color:grey'>&lt;-- The "+words[2]+" "+objectName+"s will all be pickable objects</span>";
+							splitLines[i].content+= " <span style='color:grey'>&lt;-- The "+words[2]+" "+objectName+"s will all be pickable objects</span>";
 						}						
 					}
 				}
@@ -308,8 +356,8 @@ function parseText(){
 							const amount = parseInt(words[2]);
 							if (!isNaN(amount) && amount > 0){
 								isDryLine = false;
-								lines[i] = "<span style='color:"+(multiple>0?"lightgreen":"red")+"'>"+lines[i]+"</span>";
-								lines[i]+= " <span style='color:grey'>&lt;-- The player will "+(multiple>0?"gain":"lose")+" "+(amount)+" health points upon entering this place</span>";
+								splitLines[i].content = "<span style='color:"+(multiple>0?"lightgreen":"red")+"'>"+splitLines[i].content+"</span>";
+								splitLines[i].content+= " <span style='color:grey'>&lt;-- The player will "+(multiple>0?"gain":"lose")+" "+(amount)+" health points upon entering this place</span>";
 								hpEvents.push(multiple * amount)
 							}								
 						}
@@ -317,17 +365,18 @@ function parseText(){
 				}
 			}
 			if (isDryLine){
-				dryTextLines.push(lines[i]);
+				dryTextLines.push({character: splitLines[i].character, content: splitLines[i].content});
 			}
 		}
 	}
 	
-	let finalText = lines.join("<br>");
+	const finalText = joinManually(splitLines);
+	
 	return {
 		text: finalText,
 		props: objects,
 		hpEvents: hpEvents,
-		dryText: dryTextLines.join("\n"),
+		dryText: joinManually(dryTextLines, false),
 		dryTitle: dryTitle,
 		isDeadEnd: isDeadEnd,
 		direction: editorDirection,
@@ -399,6 +448,7 @@ function post(payload, callback){
 	postAjax('communicator.php', payload, function(data){
 		try{
 			const parsed = JSON.parse(data);
+			console.log(parsed);
 			callback(parsed);
 		}
 		catch(e){
@@ -503,7 +553,9 @@ function interpretServerFeedback(data){
 
 function parsePage(page){
 	let lines = [];
-	const elements = page.content.split("\n");
+	
+	const content = page.content;
+	const elements = content.split("\n");
 	lines.push("<b>"+elements[0]+"</b>");
 	if (elements.length == 1){
 		lines = elements;
@@ -534,8 +586,9 @@ function parsePage(page){
 	if (page.updateDimension){
 		updateDimensionText(page.dimension_name, page.pages_count);
 	}
-	
-	return (page.isDeath ? document.getElementById("death").innerHTML : "") 
+
+	return (page.isDeath && page.death_page != undefined ? parsePage(page.death_page) + "<br><br>" : "")
+	+ (page.isDeath ? document.getElementById("death").innerHTML : "") 
 	+ (page.isWarp ? document.getElementById("warp").innerHTML.replace("%dimension", initialUpperCase(page.dimension_name)) : "") 
 	+ lines.join("<br>");
 }

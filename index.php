@@ -25,7 +25,7 @@
 		<div id="mainContainer">
 			<div id="title">
 				<h1>
-					<span style='color:grey;'>LOUVESYSTEMS'</span> <b>ADVNTURE</b> <span style='color:grey;'>V1.3.0<span style="float:right;" id="dimensionInfo"></span></span>
+					<span style='color:grey;'>LOUVESYSTEMS'</span> <b>ADVNTURE</b> <span style='color:grey;'>V1.3.1<span style="float:right;" id="dimensionInfo"></span></span>
 				</h1>
 			</div>
 			<div class="terminal">
