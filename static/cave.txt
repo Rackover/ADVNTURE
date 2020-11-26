@@ -1,0 +1,9 @@
+cave
+cavern
+underground
+gallery
+hidden
+passage
+cavity
+fall
+under

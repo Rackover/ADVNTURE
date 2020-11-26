@@ -1,19 +1,20 @@
  <?php
 
- ini_set('display_errors', 1); 
- ini_set('display_startup_errors', 1); 
- error_reporting(E_ALL);
- 
- ini_set('session.gc_probability', 0);
- ini_set('session.gc_maxlifetime', 315360000);
- ini_set('session.cookie_lifetime', 315360000);
- ini_set('session.use_cookies', 1);
- ini_set('session.use_only_cookies', 1);
- 
- session_start();
+ini_set('display_errors', 1); 
+ini_set('display_startup_errors', 1); 
+error_reporting(E_ALL);
+
+ini_set('session.gc_probability', 0);
+ini_set('session.gc_maxlifetime', 315360000);
+ini_set('session.cookie_lifetime', 315360000);
+ini_set('session.use_cookies', 1);
+ini_set('session.use_only_cookies', 1);
+
+session_start();
  
 include_once "database.php";
 include_once "commands.php";
+include_once "player.php";
  
 $db = get_connection();
 $player = get_player($db);
@@ -43,9 +44,14 @@ if (isset($_POST["action"])){
 }
 
 function recover($db, $p, $player){
+    player_give_vision_on_page($db, $player["id"], $player["location"]);
+    
 	$content = get_page($db, $player["location"], $player);
+	
+    $content["dimension_type"] = is_player_dimension_grid_based($db, $player) ? "GRID" : "BRANCH";
 	$content["dimension_name"] = $player["dimension_name"];
 	$content["pages_count"] = get_page_count_in_dimension($db, $player["dimension"]);
+    
 	echo json_encode([
 		"type"=>$player["is_new"] ? "intro" : "recovery",
 		"content"=>$content

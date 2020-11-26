@@ -8,12 +8,18 @@ let editorExistingPages = [];
 let currentPage = 1;
 let lastCommand = "";
 let dimensionName = "";
+let pageCount = 0;
+let previousHourglass;
+let currentPageName = "";
+let isGridDimension;
+let isObjectAction = false;
 
 const maxNumberOfCharacters = 256; // I suggest you do not try to change that.
 const allowedChars = ':;,!?.azertyuiopqsdfghjklmwxcvbnAZERTYUIOPQSDFGHJKLMWXCVBN&()-"\'$1234567890⠀';
 const hpAliases = ["hp", "healthpoints", "hitpoints", "pv", "lp", "lifepoints", "healthpoint", "lifepoint"]
 const hpDoubleAliases = ["health", "hit", "life"]
 const hpDoubleAliasesPlurals = ["points", "point"]
+
 
 // Mobile
 window.onload = function() {	
@@ -127,7 +133,8 @@ function updateText(){
 	
 	const icon = isInEditor ? "⚒" : "☺";
 	
-	let hTxt = parseText(txt).text;
+    let parsed = parseText(txt);
+	let hTxt = parsed.text;
 	
 	if (txt.substring(0, 9) === "IDENTIFY "){
 		let starString = "";
@@ -136,6 +143,11 @@ function updateText(){
 		}
 		hTxt = "IDENTIFY "+ starString;
 	}
+    
+    // Adding line break if the user effectily has en empty line at the end
+    if (txt[txt.length-1] == "\n"){
+        hTxt += "<br>";
+    }
 
 	if (flip){
 		hTxt = icon+" > "+hTxt + "_";
@@ -151,18 +163,21 @@ function updateText(){
 			characterCount += lines[k].length;
 		}
 		hTxt += "<br>";
+        
 		if (lines.length <= 1 && lines[0].length > 0){
-			const existing = isExistingPage(lines[0]);
-			if (existing){
-				hTxt += "<br><span class='notice'>Press ENTER to make this place a direct shortcut to '"+existing+"'</span>"
+			if (parsed.isShortcut){
+				hTxt += "<br><span class='notice'>Press ENTER to make this place a direct shortcut to '"+shortCutTo+"'</span>"
 			}
-			else{
+			else if (parsed.isDeadEnd){
 				hTxt += "<br><span class='notice'>With only one line, this will be a dead end.<br>'You cannot go there', or something like that.<br><span style='color:white;'>Press ENTER if you want to keep writing</span> and make this a real place.";
 			}
+            else if (parsed.isStackedLocation){
+				hTxt += "<br><span class='notice'>This place will be the same as one you used the object on, but in a different state. </span>";
+            }
 		}
 		else if (lines.length >1 && lines[lines.length-1].length === 0){
 			if (characterCount > 0){
-				hTxt += "<span class='notice'>Press ENTER a second time to <span style='color:white;'>end edition</span> and save that place.</span><br>If you wish to write more, you can also <span style='color:white;'>keep writing.</span></span>";
+				hTxt += "<span class='notice'>Press ENTER a second time to <span style='color:white;'>end edition</span> and save that place.</span><br>If you wish to write more, you can just <span style='color:white;'>keep writing.</span></span>";
 			}
 			else{
 				hTxt += "<span class='notice'>Press ENTER a second time to abort edition and go back to where you were.</span>";
@@ -176,9 +191,13 @@ function updateText(){
 			else{
 				lengthNotice = "<span style='color:darkGrey;'>"+lengthNotice+"</span>";
 			}
-			hTxt += "<br>"+lengthNotice;
+            
+            if (txt.length > 0){
+                hTxt += "<br>"+lengthNotice;
+            }
+            
 			if (characterCount > 0){
-				hTxt += "<br><br><span class='notice'>"+document.getElementById("editorTips").innerHTML+"</span>";
+				hTxt += "<br><br><span class='notice'>"+document.getElementById("editorTips").innerHTML+(isObjectAction ? document.getElementById("objectActionTips").innerHTML : "")+"</span>";
 			}
 		}
 	}
@@ -220,6 +239,7 @@ function inputToConsole(letter){
 				txt = "";
 				let feedbacks = document.getElementsByClassName("feedback");
 				feedbacks[feedbacks.length-1].innerHTML += "You decided not to explore this direction, and to return to your previous location instead.";
+                document.getElementById("minimap").innerHTML = previousHourglass;
 			}
 			return;
 		}
@@ -291,25 +311,64 @@ function parseText(){
 
 	let objects = {};
 	let isDeadEnd = false;
-	let isShortCut = false
+	let isShortCut = false;
+    let shortCutTo = "";
+    let isStackedLocation = false;
 	let dryTextLines = [];
-	const dryTitle = splitLines[0].content;
+	let dryTitle = splitLines[0].content;
 	let hpEvents = []
-	
+    let biomeName = null;
+    let biomeColor;
+	    
 	if (isInEditor){
+        
+        // Getting biome
+        const regExp = /\(([^)]+)\)/;
+        const matches = regExp.exec(dryTitle);
+        let biomeColor = undefined;
+        
+        // Custom biome?
+        if (matches && matches[1]){
+            let upperName = matches[1].toUpperCase();
+            let biomeContent = biomeContents[upperName];
+            if (biomeContent){
+                biomeColor = biomeContent.color;
+                biomeName = upperName.charAt(0).toUpperCase() + upperName.slice(1).toLowerCase();
+                dryTitle = dryTitle.replace("("+matches[1]+")", "");
+            }
+        }
+
+        // Editor code (or at least, half of it)
 		if (splitLines.length <= 1 || (splitLines.length === 2 && splitLines[1].content.length === 0)){
-			const existing = isExistingPage(dryTitle);
-			if (existing){
+			const shortCutTo = isExistingPage(dryTitle);
+			if (shortCutTo){
 				splitLines[0].content = "<span style='color:white'><u>"+dryTitle+"</u></span> <span style='color:grey'>&lt;-- This will be a shortcut to '"+existing+"'</span>";
 				isShortCut = true;
 			}
-			else{
-				splitLines[0].content = "<span style='color:grey'>"+dryTitle+(dryTitle.length === 0 ? "" : " <i>(dead end)</i></span>");
+			else {
+                if (biomeColor){
+                    splitLines[0].content = "<span style='color:grey'>"+dryTitle+" (<span style='color:"+biomeColor+";'>"+biomeName+"</span>)"+(dryTitle.length === 0 ? "" : " <i>(dead end)</i></span>");     
+                }
+                else{
+                    splitLines[0].content = "<span style='color:grey'>"+dryTitle+(dryTitle.length === 0 ? "" : " <i>(dead end)</i></span>");                    
+                }
+                
 				isDeadEnd = true;
 			}
 		}
 		else{
-			splitLines[0].content = "<b>"+dryTitle+"</b> <span style='color:grey'>&lt;-- This will be the name of that place</span>";
+            if (isObjectAction && isGridDimension && currentPageName.trim() === dryTitle.trim()){
+				splitLines[0].content = "<b><u>"+dryTitle+"</u></b> <span style='color:grey'>&lt;-- This will be the same place, but in a different state</span>";             
+                isStackedLocation = true;
+            }
+            else if (dryTitle.length > 0){
+                if (biomeColor){
+                    splitLines[0].content = "<b>"+dryTitle+" (<span style='color:"+biomeColor+";'>"+biomeName+"</span>)</b> <span style='color:grey'>&lt;-- This will be the name and environment of that place</span>";
+                }
+                else {
+                    splitLines[0].content = "<b>"+dryTitle+"</b> <span style='color:grey'>&lt;-- This will be the name of that place</span>";
+                }
+            }
 		}
 		
 		for (let i=1; i< splitLines.length; i++){
@@ -380,7 +439,14 @@ function parseText(){
 		dryTitle: dryTitle,
 		isDeadEnd: isDeadEnd,
 		direction: editorDirection,
-		origin: currentPage
+		origin: currentPage,
+        objectTeleport: isObjectAction && !isStackedLocation,
+        biome: biomeName,
+        
+        // Used in updateText for additional hints
+        isShortCut: isShortCut,
+        shortCutTo: shortCutTo,
+        isStackedLocation: isStackedLocation
 	};
 }
 
@@ -486,6 +552,12 @@ function postAjax(url, data, success) {
 }
 
 function interpretServerFeedback(data){
+    
+    const hourglassData = data.content?.hourglass ?? data?.hourglass;
+    if (hourglassData){
+        updateHourglass(hourglassData);
+    }
+    
 	switch (data.type){
 		default: return data.content;
 		case "page":
@@ -506,6 +578,7 @@ function interpretServerFeedback(data){
 			if (data.type === "warp"){
 				data.content.isWarp = true;
 			}
+            
 			return parsePage(data.content);
 			
 		case "props":
@@ -522,6 +595,7 @@ function interpretServerFeedback(data){
 		case "editor":
 			editorDirection = data.content.direction;
 			editorExistingPages = data.content.existing_pages;
+            setHourglassEditorMode();
 			return showEditor(data.content.direction);
 			break;
 			
@@ -548,7 +622,26 @@ function interpretServerFeedback(data){
 			currentPage = data.content.page_id;
 			return data.content.message;
 			break;
+            
 	}
+}
+
+function updateHourglass(hourglass){
+    let hourglassInfo = {
+        north: hourglass.NORTH,   
+        west: hourglass.WEST,
+        east: hourglass.EAST,
+        south: hourglass.SOUTH,
+        here: hourglass.here
+    };
+    
+    previousHourglass = document.getElementById("minimap").innerHTML;
+    document.getElementById("minimap").innerHTML = getUpdatedHourglass(hourglassInfo);
+}
+
+function setHourglassEditorMode(){
+    previousHourglass = document.getElementById("minimap").innerHTML;
+    document.getElementById("minimap").innerHTML = getEditorHourglass();
 }
 
 function parsePage(page){
@@ -556,10 +649,18 @@ function parsePage(page){
 	
 	const content = page.content;
 	const elements = content.split("\n");
-	lines.push("<b>"+elements[0]+"</b>");
+	
+    currentPageName = elements[0];
+    
 	if (elements.length == 1){
 		lines = elements;
 	}
+    else{
+        const hourglass = content.hourglass ?? page.hourglass;
+        const color = biomeContents[hourglass?.here.biome];
+        const styleInfo = color == undefined ? "" : "style='color:"+color?.color+";'";
+        lines.push("<b "+styleInfo+">"+elements[0]+"</b>");
+    }
 	
 	for(let i=1; i< elements.length; i++){
 		lines.push(elements[i]);
@@ -584,8 +685,12 @@ function parsePage(page){
 	}
 
 	if (page.updateDimension){
-		updateDimensionText(page.dimension_name, page.pages_count);
+        isGridDimension = page.dimension_type == "GRID";
+		updateDimensionText(page.dimension_name, page.pages_count, page.completion);
 	}
+    else if (page.completion){
+		updateDimensionText(dimensionName, pageCount, page.completion);
+    }
 
 	return (page.isDeath && page.death_page != undefined ? parsePage(page.death_page) + "<br><br>" : "")
 	+ (page.isDeath ? document.getElementById("death").innerHTML : "") 
@@ -593,9 +698,10 @@ function parsePage(page){
 	+ lines.join("<br>");
 }
 
-function updateDimensionText(name, count){
+function updateDimensionText(name, count, explored){
 	dimensionName = name;
-	document.getElementById("dimensionInfo").textContent = "Currently exploring region "+name+" ("+count+" places)";
+    pageCount = count;
+	document.getElementById("dimensionInfo").textContent = "Currently exploring region "+name+" ("+count+" places - "+Math.ceil(explored*100)+"% explored)";
 }
 
 function formatHPEventLine(value){
@@ -614,11 +720,18 @@ function isVowel(c) {
 
 function showEditor(action, place){
 	isInEditor = true;
+    isObjectAction = action.split(" ")[0].toUpperCase() == "USE";
 	return document.getElementById("editorNotice").innerHTML.replace("%action", action);
 }
 
 function isExistingPage(pageName){
-	
+	if (isGridDimension){
+    
+        return false;
+        
+    }
+    
+    
 	const upperCaseNames = editorExistingPages.map(function(value) {
 	  return value.toUpperCase();
 	});

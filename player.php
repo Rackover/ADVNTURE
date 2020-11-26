@@ -43,7 +43,8 @@ function get_player($db, $new=false){
 		  player.hp,
 		  prop.name,
 		  page.dimension_id AS dimension_id,
-		  dimension.name AS dimension_name
+		  dimension.name AS dimension_name,
+          page.position AS position
 		FROM
 		  player
 		  LEFT JOIN player_prop player_prop ON player.id = player_prop.player_id
@@ -65,6 +66,7 @@ function get_player($db, $new=false){
 	else{
 		$player = array(
 			"location"=>$result[0]["page_id"],
+			"position"=>$result[0]["position"],
 			"is_banned"=>$client["is_banned"],
 			"props"=>array(),
 			"id"=>$playerId,
@@ -96,6 +98,10 @@ function ban_client($db, $id, $reason){
 
 function player_lose_object($db, $player_id, $object_id){
 	$db->prepare("DELETE FROM player_prop WHERE prop_id=? AND player_id=?")->execute([$object_id, $player_id]);
+}
+
+function player_give_vision_on_page($db, $player_id, $page_id){
+	$db->prepare("INSERT IGNORE INTO player_vision (page_id, player_id) VALUES (?, ?)")->execute([$page_id, $player_id]);
 }
 
 function create_player($db, $clientId, $playerId){

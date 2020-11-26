@@ -1,0 +1,12 @@
+borough
+town
+village
+settlement
+city
+burgh
+gates
+bridge
+farm
+metropolis
+megalopolis
+township

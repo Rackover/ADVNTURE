@@ -28,6 +28,7 @@
         "WARP" => 'command_warp',
         "REGIONS" => 'command_list_dimensions',
         "REGION" => 'command_get_dimension',
+		"LOCATION" => 'command_get_location',
         
         "N" => 'command_direction_north',
         "S" => 'command_direction_south',
@@ -41,6 +42,7 @@
         "HEALTH" => 'command_hp_status',
         "HEALTHPOINTS" => 'command_hp_status',    
         "SUICIDE" => 'command_suicide',
+		"POSITION" => 'command_get_location',
     
         "IDENTIFY"=> 'command_identify',
         "SHOWLAST"=> 'command_last_uploads',
@@ -70,7 +72,11 @@
         $page = get_page($db, $player["location"], $player);
         if (isset($page["outputs"][$direction])){
             $newId = $page["outputs"][$direction]["destination"];
+            
+			player_give_vision_on_page($db, $player["id"], $newId);
+            
             $newPage = get_page($db, $newId, $player);
+            
             
             // HP Calculation
             $change = 0;
@@ -91,7 +97,7 @@
                 $db->prepare("UPDATE player SET hp=? WHERE id=?")->execute([$player["hp"], $player["id"]]);
                 // $newPage["content"].= "<br>"."(You currently have ".$player["hp"]." health points)";
             }
-            
+			
             // Returning results
             if ($newPage["is_dead_end"]){
                 return_200("status", $newPage["content"]);
@@ -106,7 +112,7 @@
             $readonly = $state->fetch()["readonly"];
 
             if ($readonly){
-                return_200("status", "This region is history - and history may not be rewritten.<br>Use the WARP command to warp to an unexplored region.");
+                return_200("status", "There is nothing more here. This region is history - and history may not be rewritten.<br>Use the WARP command to warp to an unexplored region.");
             }
             else{
                 $existingPages = get_all_page_names($db, $player["dimension"]);
@@ -178,7 +184,10 @@
                 $db->prepare("INSERT INTO player_prop (player_id, prop_id, original_page_id) VALUES (?, ?, ?)")->execute([$player["id"], $prop["id"], $page["id"]]);
                 $player = get_player($db);
                 
-                return_200("status", "Took ".strtolower($prop["name"]).".");
+                // Update page information for the hourglass
+                $page = get_page($db, $player["location"], $player);
+                
+                return_200_hourglass("status", "Took ".strtolower($prop["name"]).".", $page["hourglass"]);
             }
         }
         return_200("status", "There is no '".$name."' here.");
@@ -194,8 +203,8 @@
                 || strtolower($prop["name"]) === strtolower($name)){
                 $db->prepare("DELETE FROM player_prop WHERE id=?")->execute([$prop["assignment_id"]]);
                 $player = get_player($db);
-                echo json_encode(["type"=>"status","content"=>"Lost ".strtolower($prop["name"])."."]);
-                exit;
+                
+                return_200_hourglass("status", "Lost ".strtolower($prop["name"]).".", get_page($db, $player["location"], $player)["hourglass"]);
             }
         }
         
@@ -295,7 +304,7 @@
             return_200("status", "What region do you wish to visit? (Type REGIONS to get a list of regions.)");
         }
         $dimName = $elements[0];              
-        $state = $db->prepare("SELECT id,name FROM dimension WHERE name=?");
+        $state = $db->prepare("SELECT id,name,type FROM dimension WHERE name=?");
         $state->execute([$dimName]);
         $data = $state->fetch();
         if ($data === false){
@@ -308,6 +317,7 @@
         $dimName = $data["name"];
         $player["dimension"] = $dimension;
         $player["dimension_name"] = $dimName;
+        $content["dimension_type"] = $data["type"];
 
         // Building response
         $page = get_page($db, get_starting_page_id_for_dimension($db, $dimension), $player);
@@ -337,32 +347,53 @@
     }
         
   function command_hp_status($db, $elements, $player){
-      $msg = "";
-      if ($player["hp"] < BASE_HP/4){
+    $msg = "";
+    if ($player["hp"] < BASE_HP/4){
         $msg .= "At this point, you're hardly keeping yourself together.<br>You can barely stand, and definitely need some rest.";
-      }
-      else if ($player["hp"] < BASE_HP/2){
+    }
+    else if ($player["hp"] < BASE_HP/2){
         $msg .= "You are not feeling well. Maybe some rest is in order.";
-      }
-      else if ($player["hp"] < BASE_HP){
+    }
+    else if ($player["hp"] < BASE_HP){
         $msg .= "A few bruises, but nothing bad.";
-      }
-      else if ($player["hp"] < BASE_HP*1.5){
+    }
+    else if ($player["hp"] < BASE_HP*1.5){
         $msg .= "You feel fresh and ready to pursue your ADVNTURE, wherever it may lead!";
-      }
-      else if ($player["hp"] < BASE_HP*4){
+    }
+    else if ($player["hp"] < BASE_HP*4){
         $msg .= "You feel unusally strong and robust.<br>Nothing can stop you.";
-      }
-      else if ($player["hp"] < BASE_HP*10){
+    }
+    else if ($player["hp"] < BASE_HP*10){
         $msg .= "You feel like your skin is steel-plated, harmproof.<br>You're filled with determination.";
-      }
-      else if ($player["hp"] <= MAX_HP){
+    }
+    else if ($player["hp"] <= MAX_HP){
         $msg .= "A supernatural strength inhabits you.<br>You feel invincible.";
-      }
-      
-      $msg .= "<br>You currently have ".$player["hp"]." health points.";
-      return_200("status", $msg);
+    }
+
+    $msg .= "<br>You currently have ".$player["hp"]." health points.";
+    return_200("status", $msg);
   }
+  
+    function command_get_location($db, $elements, $player){
+        if (!$player["position"]){
+            return command_get_dimension($db, $elements, $player);
+        }
+        
+        $location = explode(" ", $player["position"]);
+        $x = intval($location[0]);
+        $y = intval($location[1]);
+        
+        if ($x === 0 && $y === 0){
+            return_200("status", "You're standing on this region's landmark.");
+        }
+        
+        return_200("status", 
+            "You're currently "
+                .($y != 0 ? abs($y)." leagues ".($y != 0 ? "north" : "south") : "")
+                .($y*$x != 0 ? " and " : "")
+                .($x != 0 ? abs($x)." leagues ".($x < 0 ? "east" : "west") : "")
+            ." from this region's landmark."); 
+    }
     
   function command_identify($db, $elements, $player){
     $pass = implode(" ", $elements);

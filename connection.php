@@ -18,6 +18,15 @@
 		]);
 		exit;
 	}
+	
+	function return_200_hourglass($type, $content, $hourglass){
+		echo json_encode([
+			"type"=>$type,
+			"content"=>$content,
+			"hourglass"=>$hourglass
+		]);
+		exit;
+	}
 
 	function return_503_banned(){
 		header('HTTP/1.0 503 Service Unavailable');
