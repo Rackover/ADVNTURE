@@ -97,7 +97,7 @@ function makeMap(borders, places){
         if (ci == 0) continue;
         if (ci == northBand.length-1) continue;
         if (ci < 3 && !northHasWest) continue;
-        if (ci == Math.floor(northBand.length/2)) continue;
+        if (ci == Math.floor(northBand.length/2) && !places.north.is_dead_end) continue;
         if (ci > 8 && !northHasEast){
             break;   
         }
@@ -114,7 +114,7 @@ function makeMap(borders, places){
         if (ci == 0) continue;
         if (ci == southBand.length-1) continue;
         if (ci < 3 && !southHasWest) continue;
-        if (ci == Math.floor(southBand.length/2)) continue;
+        if (ci == Math.floor(southBand.length/2)  && !places.south.is_dead_end) continue;
         if (ci > 8 && !southHasEast){
             break;
         }
@@ -131,7 +131,7 @@ function makeMap(borders, places){
         if (lineIndex == splitted.length-1) continue;
         if (lineIndex == 1 && northHasWest) continue;
         if (lineIndex == splitted.length-2 && southHasWest) continue;
-        if (lineIndex == Math.floor(splitted.length/2)) continue;
+        if (lineIndex == Math.floor(splitted.length/2) && !places.west.is_dead_end) continue;
         
         for(let i = 0; i < SIDE_BAND_WIDTH; i++){
             splitted[lineIndex][1+i] = places.west.is_explored ? "<span style='color:"+color+";'>"+str[(lineIndex+i)%str.length]+"</span>" : unknownCharStr[i];
@@ -147,7 +147,7 @@ function makeMap(borders, places){
         if (lineIndex == splitted.length-1) continue;
         if (lineIndex == 1 && northHasEast) continue;
         if (lineIndex == splitted.length-2 && southHasEast) continue;
-        if (lineIndex == Math.floor(splitted.length/2)) continue;
+        if (lineIndex == Math.floor(splitted.length/2) && !places.east.is_dead_end) continue;
         
         for(let i = 0; i < SIDE_BAND_WIDTH; i++){
             splitted[lineIndex][splitted[lineIndex].length-2-i] = places.east.is_explored ? "<span style='color:"+color+";'>"+str[(lineIndex+i)%str.length]+"</span>" : unknownCharStr[i];

@@ -121,6 +121,7 @@
                     <li style="color:yellow">- <b>USE &lt;object&gt;</b>: Uses an object at your current location.</li>
                     <li>- <b>INVENTORY</b>: Tells you what objects you currently have.</li>
                     <li>- <b>STATUS</b>: Tells you how you currently feel.</li>
+                    <li>- <b>MAP</b>: Draw a map of your surroundings, as you've explored them</li>
                 </ul>
                 <ul style="list-style: none; color:grey;">
                     <li>- <b>REGIONS</b>: List the available regions to explore</li>

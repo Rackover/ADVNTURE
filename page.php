@@ -7,6 +7,7 @@ define("OBJECT_TELEPORT_BASE_RANGE", 30);
 define("ALLOW_BANNED_SUBMISSIONS", true);
 
 
+
 function get_starting_page_id_for_player($db, $player){
 	$statement = $db->prepare(
 		"SELECT starting_page FROM dimension 
@@ -103,7 +104,7 @@ function get_page_hourglass_info($db, $page_id, $player){
         $prop_id = $data["prop_id"];
         $props = 0;
         $biome = $data["biome_name"];
-        $dead_end = $data["is_dead_end"];
+        $dead_end = $data["is_dead_end"] == "1";
         $first_loop = true;
         $skippedProps = [];
         
@@ -175,6 +176,55 @@ function is_position_occupied($db, $position){
 	$data = $statement->fetch();
     
     return $data != false;
+}
+
+function get_page_biome_id($db, $id){
+    
+	$statement = $db->prepare("
+		SELECT 
+            biome_id
+        FROM 
+            page
+        WHERE 
+            page.id = ?
+    ");
+    
+    $statement->execute([$id]);
+    
+    $result = $statement->fetch();
+    
+	if ($result === false || !isset($result["biome_id"])){
+		var_dump($id);
+		echo false;
+		// This should never happen
+	}
+    
+    return $result["biome_id"];
+}
+
+function get_page_biome_name($db, $id){
+    
+	$statement = $db->prepare("
+		SELECT 
+            biome.name AS biome
+        FROM 
+            page
+            LEFT JOIN biome biome ON biome.id = page.biome_id
+        WHERE 
+            page.id = ?
+    ");
+    
+    $statement->execute([$id]);
+    
+    $result = $statement->fetch();
+    
+	if ($result === false || !isset($result["biome"])){
+		var_dump($id);
+		echo false;
+		// This should never happen
+	}
+    
+    return $result["biome"];
 }
 
 function get_page($db, $id, $player){
@@ -357,7 +407,7 @@ function receive_submission($db, $p, $player){
 			
             if (is_player_dimension_grid_based($db, $player) && reverse_direction_command(trim($submission["direction"])) != false){
                 // No shortcut in grid mode with the cardinal directions!!
-                return_200("status", "You cannot create shortcuts in a grid-based regions, at least - not without objects");
+                return_200("status", "The region name you gave was already taken - you cannot create shortcuts in a grid-based regions, at least - not without objects");
             }
             
 			$place = $result["id"];
@@ -368,7 +418,8 @@ function receive_submission($db, $p, $player){
 			
 			echo json_encode([
 				"type"=>"status",
-				"content"=> "After discovering a shortcut leading to <b>".(explode("\n", $result["content"])[0])."</b> from <b>".$originName."</b>, you turned around and went back to where you came from."
+				"content"=> "After discovering a shortcut leading to <b>".(explode("\n", $result["content"])[0])."</b> from <b>".$originName."</b>, you turned around and went back to where you came from.",
+                "hourglass"=>get_page($db, $player["location"], $player)["hourglass"]
 			]);
 			exit;
 		}
@@ -377,12 +428,20 @@ function receive_submission($db, $p, $player){
 	// Size limit
 	if (strlen($submission["dryText"]) + strlen($submission["dryTitle"]) > 256){
 		header('HTTP/1.0 400 Bad Request');
-		echo json_encode(["type"=>"error","content"=>"This location was forgotten ages ago, as it was too long and complex for anyone to remember.<br>You decide to turn around and go back to where you came from."]);
+		echo json_encode([
+            "type"=>"error",
+            "content"=>"This location was forgotten ages ago, as it was too long and complex for anyone to remember.<br>You decide to turn around and go back to where you came from.",
+            "hourglass"=>get_page($db, $player["location"], $player)["hourglass"]
+            ]);
 		exit;
 	}
 	if (strlen($submission["dryTitle"]) < 2){
 		header('HTTP/1.0 400 Bad Request');
-		echo json_encode(["type"=>"error","content"=>"This location was forgotten ages ago.<br>The name was too short, and never really quite sticked to the mind of the travelers passing by.<br>You decide to turn around and go back to where you came from."]);
+		echo json_encode([
+            "type"=>"error",
+            "content"=>"This location was forgotten ages ago.<br>The name was too short, and never really quite sticked to the mind of the travelers passing by.<br>You decide to turn around and go back to where you came from.",
+            "hourglass"=>get_page($db, $player["location"], $player)["hourglass"]
+        ]);
 		exit;
 	}
 	
@@ -450,7 +509,8 @@ function receive_submission($db, $p, $player){
             $origin_position = get_page_position($db, $submission["origin"]);
             
             if ($shift === false){
-                if ($submission["objectTeleport"]){
+                // Dead ends from object teleportations are always "stacked rooms", otherwise you'd block one random cell of the map each time
+                if ($submission["objectTeleport"] && !$submission["isDeadEnd"]){
                     // Using an object to teleport
                     $offset = get_page_count_in_dimension($db, $player["dimension"]) + OBJECT_TELEPORT_BASE_RANGE;
                     $ok = false;
@@ -494,19 +554,25 @@ function receive_submission($db, $p, $player){
         }
         
         // Finding out biome
-        $biome = get_default_biome($db);
+        $default_biome = get_default_biome($db);
+        $biome = $default_biome;
         
         if (isset($submission["biome"])){
             $biome = get_biome_by_name($db, $submission["biome"]);
         }
         else{
             $try_title = determine_biome($db, $submission["dryTitle"]);
-            if ($biome != $try_title){
+            if ($try_title != $default_biome){
                 $biome = $try_title;
             }
             else{
                 // Last chance
                 $biome = determine_biome($db, $submission["dryText"]);
+                
+                // If nothing works, and if it's a dead end, we can take the current player's location biome instead
+                if ($biome == $default_biome && $submission["isDeadEnd"]){
+                    $biome = get_page_biome_id($db, $submission["origin"]);
+                }
             }
         }
         
@@ -589,9 +655,11 @@ function receive_submission($db, $p, $player){
 		}
 	}
 	
+    // Updated hourglass with dead end
 	echo json_encode([
 		"type"=>"status",
-		"content"=> $content
+		"content"=> $content,
+        "hourglass"=>get_page($db, $player["location"], $player)["hourglass"]
 	]);
 	exit;
 }

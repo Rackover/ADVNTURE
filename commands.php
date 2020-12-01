@@ -2,6 +2,7 @@
     include_once  "page.php";
     include_once  "player.php";
     include_once  "connection.php";
+    include_once  "map.php";
 
     define("COMMANDS", array(
         "NORTH" => 'command_direction_north',
@@ -29,6 +30,7 @@
         "REGIONS" => 'command_list_dimensions',
         "REGION" => 'command_get_dimension',
 		"LOCATION" => 'command_get_location',
+        "MAP" => 'command_get_map',
         
         "N" => 'command_direction_north',
         "S" => 'command_direction_south',
@@ -43,6 +45,8 @@
         "HEALTHPOINTS" => 'command_hp_status',    
         "SUICIDE" => 'command_suicide',
 		"POSITION" => 'command_get_location',
+        "DRAWMAP" => 'command_get_map',
+        "SURROUNDINGS" => 'command_get_map',
     
         "IDENTIFY"=> 'command_identify',
         "SHOWLAST"=> 'command_last_uploads',
@@ -320,7 +324,10 @@
         $content["dimension_type"] = $data["type"];
 
         // Building response
-        $page = get_page($db, get_starting_page_id_for_dimension($db, $dimension), $player);
+        $page_id = get_starting_page_id_for_dimension($db, $dimension);
+        player_give_vision_on_page($db, $player["id"], $page_id); 
+        
+        $page = get_page($db, $page_id, $player);
         $page["dimension_name"] = $player["dimension_name"];
         $page["pages_count"] = get_page_count_in_dimension($db, $player["dimension"]);
 
@@ -344,6 +351,11 @@
             $dimensions.= "<br>".($player["dimension_name"] === $row["name"] ? "&gt; <b class='emphasis'>" : "<b>").str_replace(" ", "&nbsp;", str_pad($row["name"], ($player["dimension_name"] === $row["name"] ? 8 : 10), " "))."</b>|&nbsp;&nbsp;&nbsp;&nbsp;".($row["readonly"] ? "History" : "Unexplored");
         }
         return_200("status", "You have heard of the following regions:<br><br>".$dimensions);
+    }
+    
+    function command_get_map($db, $elements, $player){
+        $map = map\get_html_characters_map($db, $player);
+        return_200("status", $map);
     }
         
   function command_hp_status($db, $elements, $player){

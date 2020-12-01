@@ -518,7 +518,7 @@ function post(payload, callback){
 			callback(parsed);
 		}
 		catch(e){
-			console.log(data);
+			console.log("["+data+"]");
 			console.log(e);
 			txt = "";
 			const parent = input.parentNode;
