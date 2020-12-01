@@ -1,11 +1,11 @@
 -- phpMyAdmin SQL Dump
--- version 4.6.6deb4
+-- version 4.6.6deb5ubuntu0.5
 -- https://www.phpmyadmin.net/
 --
--- Host: localhost:3306
--- Generation Time: Mar 28, 2020 at 09:04 PM
--- Server version: 10.1.38-MariaDB-0+deb9u1
--- PHP Version: 7.0.33-0+deb9u6
+-- Client :  localhost:3306
+-- Généré le :  Mar 01 Décembre 2020 à 23:02
+-- Version du serveur :  5.7.32-0ubuntu0.18.04.1
+-- Version de PHP :  7.2.24-0ubuntu0.18.04.7
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 SET time_zone = "+00:00";
@@ -17,34 +17,50 @@ SET time_zone = "+00:00";
 /*!40101 SET NAMES utf8mb4 */;
 
 --
--- Database: `adventure`
+-- Base de données :  `adventure`
 --
+CREATE DATABASE IF NOT EXISTS `adventure` DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci;
+USE `adventure`;
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table `client`
+-- Structure de la table `biome`
 --
 
-CREATE TABLE `client` (
+DROP TABLE IF EXISTS `biome`;
+CREATE TABLE `biome` (
   `id` int(11) NOT NULL,
-  `address` varchar(32) NOT NULL,
-  `is_banned` tinyint(1) NOT NULL,
-  `ban_reason` text NOT NULL
+  `name` varchar(64) NOT NULL,
+  `color` varchar(6) NOT NULL,
+  `characters` varchar(16) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table `dimension`
+-- Structure de la table `biome_words`
 --
 
-CREATE TABLE `dimension` (
+DROP TABLE IF EXISTS `biome_words`;
+CREATE TABLE `biome_words` (
   `id` int(11) NOT NULL,
-  `name` varchar(255) NOT NULL,
-  `readonly` tinyint(1) NOT NULL DEFAULT '1',
-  `initial` tinyint(1) NOT NULL DEFAULT '0',
-  `starting_page` int(11) NOT NULL,
+  `biome_id` int(11) NOT NULL,
+  `word` varchar(32) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------------
+
+--
+-- Structure de la table `client`
+--
+
+DROP TABLE IF EXISTS `client`;
+CREATE TABLE `client` (
+  `id` int(11) NOT NULL,
+  `address` varchar(32) NOT NULL,
+  `is_banned` tinyint(1) NOT NULL,
+  `ban_reason` text,
   `creation` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `last_update` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
@@ -52,9 +68,28 @@ CREATE TABLE `dimension` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `hp_event`
+-- Structure de la table `dimension`
 --
 
+DROP TABLE IF EXISTS `dimension`;
+CREATE TABLE `dimension` (
+  `id` int(11) NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `readonly` tinyint(1) NOT NULL DEFAULT '1',
+  `initial` tinyint(1) NOT NULL DEFAULT '0',
+  `starting_page` int(11) NOT NULL,
+  `type` enum('BRANCH','GRID') NOT NULL DEFAULT 'BRANCH',
+  `creation` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `last_update` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------------
+
+--
+-- Structure de la table `hp_event`
+--
+
+DROP TABLE IF EXISTS `hp_event`;
 CREATE TABLE `hp_event` (
   `id` int(11) NOT NULL,
   `page_id` int(11) NOT NULL,
@@ -64,17 +99,20 @@ CREATE TABLE `hp_event` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `page`
+-- Structure de la table `page`
 --
 
+DROP TABLE IF EXISTS `page`;
 CREATE TABLE `page` (
   `id` int(11) NOT NULL,
   `author_id` varchar(64) NOT NULL,
+  `dimension_id` int(11) NOT NULL DEFAULT '1',
+  `position` varchar(16) DEFAULT NULL,
+  `biome_id` int(11) NOT NULL DEFAULT '1',
   `content` varchar(257) NOT NULL,
   `is_hidden` tinyint(1) NOT NULL,
   `hidden_because` text NOT NULL,
   `is_dead_end` tinyint(1) NOT NULL,
-  `dimension_id` int(11) NOT NULL DEFAULT '1',
   `creation` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `last_update` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
@@ -82,35 +120,42 @@ CREATE TABLE `page` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `page_succession`
+-- Structure de la table `page_succession`
 --
 
+DROP TABLE IF EXISTS `page_succession`;
 CREATE TABLE `page_succession` (
   `id` int(11) NOT NULL,
   `origin_id` int(11) NOT NULL,
   `target_id` int(11) NOT NULL,
-  `command` varchar(255) NOT NULL
+  `command` varchar(255) NOT NULL,
+  `creation` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `last_update` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table `player`
+-- Structure de la table `player`
 --
 
+DROP TABLE IF EXISTS `player`;
 CREATE TABLE `player` (
   `id` varchar(64) NOT NULL,
   `page_id` int(11) NOT NULL,
   `client_id` int(11) NOT NULL,
-  `hp` tinyint(255) UNSIGNED NOT NULL DEFAULT '10'
+  `hp` tinyint(4) NOT NULL DEFAULT '10',
+  `creation` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `last_update` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table `player_prop`
+-- Structure de la table `player_prop`
 --
 
+DROP TABLE IF EXISTS `player_prop`;
 CREATE TABLE `player_prop` (
   `id` int(11) NOT NULL,
   `player_id` varchar(64) NOT NULL,
@@ -121,20 +166,37 @@ CREATE TABLE `player_prop` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `prop`
+-- Structure de la table `player_vision`
 --
 
-CREATE TABLE `prop` (
+DROP TABLE IF EXISTS `player_vision`;
+CREATE TABLE `player_vision` (
   `id` int(11) NOT NULL,
-  `name` varchar(96) DEFAULT NULL
+  `player_id` varchar(64) NOT NULL,
+  `page_id` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table `prop_placement`
+-- Structure de la table `prop`
 --
 
+DROP TABLE IF EXISTS `prop`;
+CREATE TABLE `prop` (
+  `id` int(11) NOT NULL,
+  `name` varchar(96) DEFAULT NULL,
+  `creation` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `last_update` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------------
+
+--
+-- Structure de la table `prop_placement`
+--
+
+DROP TABLE IF EXISTS `prop_placement`;
 CREATE TABLE `prop_placement` (
   `id` int(11) NOT NULL,
   `prop_id` int(11) NOT NULL,
@@ -145,9 +207,10 @@ CREATE TABLE `prop_placement` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `word_blacklist`
+-- Structure de la table `word_blacklist`
 --
 
+DROP TABLE IF EXISTS `word_blacklist`;
 CREATE TABLE `word_blacklist` (
   `id` int(11) NOT NULL,
   `word` varchar(64) NOT NULL,
@@ -155,41 +218,56 @@ CREATE TABLE `word_blacklist` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 --
--- Indexes for dumped tables
+-- Index pour les tables exportées
 --
 
 --
--- Indexes for table `client`
+-- Index pour la table `biome`
+--
+ALTER TABLE `biome`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `name` (`name`),
+  ADD UNIQUE KEY `color` (`color`);
+
+--
+-- Index pour la table `biome_words`
+--
+ALTER TABLE `biome_words`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Index pour la table `client`
 --
 ALTER TABLE `client`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `address` (`address`);
 
 --
--- Indexes for table `dimension`
+-- Index pour la table `dimension`
 --
 ALTER TABLE `dimension`
   ADD PRIMARY KEY (`id`),
   ADD KEY `starting_page` (`starting_page`);
 
 --
--- Indexes for table `hp_event`
+-- Index pour la table `hp_event`
 --
 ALTER TABLE `hp_event`
   ADD PRIMARY KEY (`id`),
   ADD KEY `page_id` (`page_id`);
 
 --
--- Indexes for table `page`
+-- Index pour la table `page`
 --
 ALTER TABLE `page`
   ADD PRIMARY KEY (`id`),
   ADD KEY `author_id` (`author_id`),
   ADD KEY `author_id_2` (`author_id`),
-  ADD KEY `page_ibfk_1` (`dimension_id`);
+  ADD KEY `biome_id` (`biome_id`),
+  ADD KEY `page_ibfk_2` (`dimension_id`);
 
 --
--- Indexes for table `page_succession`
+-- Index pour la table `page_succession`
 --
 ALTER TABLE `page_succession`
   ADD PRIMARY KEY (`id`),
@@ -197,7 +275,7 @@ ALTER TABLE `page_succession`
   ADD KEY `page_succession_ibfk_2` (`target_id`);
 
 --
--- Indexes for table `player`
+-- Index pour la table `player`
 --
 ALTER TABLE `player`
   ADD PRIMARY KEY (`id`),
@@ -205,7 +283,7 @@ ALTER TABLE `player`
   ADD KEY `player_ibfk_1` (`page_id`);
 
 --
--- Indexes for table `player_prop`
+-- Index pour la table `player_prop`
 --
 ALTER TABLE `player_prop`
   ADD PRIMARY KEY (`id`),
@@ -214,14 +292,24 @@ ALTER TABLE `player_prop`
   ADD KEY `player_prop_ibfk_3` (`original_page_id`);
 
 --
--- Indexes for table `prop`
+-- Index pour la table `player_vision`
+--
+ALTER TABLE `player_vision`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `unique_player_vision` (`player_id`,`page_id`),
+  ADD UNIQUE KEY `id_2` (`id`),
+  ADD KEY `id` (`id`),
+  ADD KEY `page_id` (`page_id`);
+
+--
+-- Index pour la table `prop`
 --
 ALTER TABLE `prop`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `name` (`name`);
 
 --
--- Indexes for table `prop_placement`
+-- Index pour la table `prop_placement`
 --
 ALTER TABLE `prop_placement`
   ADD PRIMARY KEY (`id`),
@@ -229,100 +317,116 @@ ALTER TABLE `prop_placement`
   ADD KEY `page_id` (`page_id`);
 
 --
--- Indexes for table `word_blacklist`
+-- Index pour la table `word_blacklist`
 --
 ALTER TABLE `word_blacklist`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `word` (`word`);
 
 --
--- AUTO_INCREMENT for dumped tables
+-- AUTO_INCREMENT pour les tables exportées
 --
 
 --
--- AUTO_INCREMENT for table `client`
+-- AUTO_INCREMENT pour la table `biome`
+--
+ALTER TABLE `biome`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+--
+-- AUTO_INCREMENT pour la table `biome_words`
+--
+ALTER TABLE `biome_words`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=102;
+--
+-- AUTO_INCREMENT pour la table `client`
 --
 ALTER TABLE `client`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=533;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1115;
 --
--- AUTO_INCREMENT for table `dimension`
+-- AUTO_INCREMENT pour la table `dimension`
 --
 ALTER TABLE `dimension`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 --
--- AUTO_INCREMENT for table `hp_event`
+-- AUTO_INCREMENT pour la table `hp_event`
 --
 ALTER TABLE `hp_event`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=38;
 --
--- AUTO_INCREMENT for table `page`
+-- AUTO_INCREMENT pour la table `page`
 --
 ALTER TABLE `page`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=277;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=550;
 --
--- AUTO_INCREMENT for table `page_succession`
+-- AUTO_INCREMENT pour la table `page_succession`
 --
 ALTER TABLE `page_succession`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=327;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=669;
 --
--- AUTO_INCREMENT for table `player_prop`
+-- AUTO_INCREMENT pour la table `player_prop`
 --
 ALTER TABLE `player_prop`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=731;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1591;
 --
--- AUTO_INCREMENT for table `prop`
+-- AUTO_INCREMENT pour la table `player_vision`
+--
+ALTER TABLE `player_vision`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=347;
+--
+-- AUTO_INCREMENT pour la table `prop`
 --
 ALTER TABLE `prop`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=97;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=151;
 --
--- AUTO_INCREMENT for table `prop_placement`
+-- AUTO_INCREMENT pour la table `prop_placement`
 --
 ALTER TABLE `prop_placement`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=103;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=164;
 --
--- AUTO_INCREMENT for table `word_blacklist`
+-- AUTO_INCREMENT pour la table `word_blacklist`
 --
 ALTER TABLE `word_blacklist`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=453;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=892;
 --
--- Constraints for dumped tables
+-- Contraintes pour les tables exportées
 --
 
 --
--- Constraints for table `dimension`
+-- Contraintes pour la table `dimension`
 --
 ALTER TABLE `dimension`
   ADD CONSTRAINT `dimension_ibfk_1` FOREIGN KEY (`starting_page`) REFERENCES `page` (`id`);
 
 --
--- Constraints for table `hp_event`
+-- Contraintes pour la table `hp_event`
 --
 ALTER TABLE `hp_event`
   ADD CONSTRAINT `hp_event_ibfk_1` FOREIGN KEY (`page_id`) REFERENCES `page` (`id`);
 
 --
--- Constraints for table `page`
+-- Contraintes pour la table `page`
 --
 ALTER TABLE `page`
-  ADD CONSTRAINT `page_ibfk_1` FOREIGN KEY (`dimension_id`) REFERENCES `dimension` (`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `page_ibfk_2` FOREIGN KEY (`author_id`) REFERENCES `player` (`id`) ON DELETE CASCADE;
+  ADD CONSTRAINT `page_ibfk_1` FOREIGN KEY (`author_id`) REFERENCES `player` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `page_ibfk_2` FOREIGN KEY (`dimension_id`) REFERENCES `dimension` (`id`),
+  ADD CONSTRAINT `page_ibfk_3` FOREIGN KEY (`biome_id`) REFERENCES `biome` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
--- Constraints for table `page_succession`
+-- Contraintes pour la table `page_succession`
 --
 ALTER TABLE `page_succession`
   ADD CONSTRAINT `page_succession_ibfk_1` FOREIGN KEY (`origin_id`) REFERENCES `page` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `page_succession_ibfk_2` FOREIGN KEY (`target_id`) REFERENCES `page` (`id`) ON DELETE CASCADE;
 
 --
--- Constraints for table `player`
+-- Contraintes pour la table `player`
 --
 ALTER TABLE `player`
   ADD CONSTRAINT `player_ibfk_1` FOREIGN KEY (`page_id`) REFERENCES `page` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `player_ibfk_2` FOREIGN KEY (`client_id`) REFERENCES `client` (`id`);
 
 --
--- Constraints for table `player_prop`
+-- Contraintes pour la table `player_prop`
 --
 ALTER TABLE `player_prop`
   ADD CONSTRAINT `player_prop_ibfk_2` FOREIGN KEY (`prop_id`) REFERENCES `prop` (`id`),
@@ -330,7 +434,14 @@ ALTER TABLE `player_prop`
   ADD CONSTRAINT `player_prop_ibfk_4` FOREIGN KEY (`player_id`) REFERENCES `player` (`id`) ON DELETE CASCADE;
 
 --
--- Constraints for table `prop_placement`
+-- Contraintes pour la table `player_vision`
+--
+ALTER TABLE `player_vision`
+  ADD CONSTRAINT `player_vision_ibfk_1` FOREIGN KEY (`page_id`) REFERENCES `page` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `player_vision_ibfk_2` FOREIGN KEY (`player_id`) REFERENCES `player` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Contraintes pour la table `prop_placement`
 --
 ALTER TABLE `prop_placement`
   ADD CONSTRAINT `prop_placement_ibfk_1` FOREIGN KEY (`prop_id`) REFERENCES `prop` (`id`) ON DELETE CASCADE,
