@@ -31,7 +31,7 @@ function get_html_characters_map($db, $player, $radius=3){
             $statement = $db->prepare($query);
             $final_str = "";
             
-            for ($y = $arr_position[1] - $radius; $y <= $arr_position[1] + $radius; $y++){
+            for ($y = $arr_position[1] + $radius; $y >= $arr_position[1] - $radius; $y--){
                 
                 for ($x = $arr_position[0] - $radius; $x <= $arr_position[0] + $radius; $x++){
                     

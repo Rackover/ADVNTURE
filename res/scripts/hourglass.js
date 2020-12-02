@@ -41,6 +41,7 @@ const BASE_CHARACTER = " ";
 const ITEM_COLOR = "#ffff00";
 const UNK_COLOR = "#d9d9d9";
 const ITEM_CHARACTER = "♦";
+const BORDER_ELEMENTS = "┌─┐│┘└";
 
 function getUpdatedHourglass(places){
     const borders = makeBorders();
@@ -59,7 +60,7 @@ function getEditorHourglass(){
     const mid = Math.floor(borders.length/2);
     
     borders[mid-2] = offset+"│▒▒▒▒▒▒▒▒▒│";
-    borders[mid] = offset+"│EDIT MODE│";
+    borders[mid] = offset + "│EDIT MODE│";
     borders[mid+2] = offset+"│▒▒▒▒▒▒▒▒▒│";
     
     return "\n\n\n"+borders.join("\n");
@@ -77,7 +78,8 @@ function makeBorders(){
 
 function makeMap(borders, places){
 
-    let splitted = borders;
+    let splitted = borders;    
+    
     const northHasWest = places.north?.name?.length > places.north?.name?.length;
     const southHasWest = places.south?.name?.length > places.west?.name?.length;
     const northHasEast = places.north?.name?.length > places.east?.name?.length;
@@ -184,8 +186,9 @@ function drawEntities(map, places){
     map[yMidPoint][xMidPoint] = "<span style='color:white;'>☺</span>";
     
     for(let i = 0; i < places.here.items; i++){
-        const y = yMidPoint + (randomBool(hashCode(places.here.name)+i) ? -1 : 1);
-        const x = xMidPoint + (randomBool((hashCode(places.here.name)+i)^2) ? -1 : 1);
+        const y = yMidPoint + (randomBool(hashCode(places.here.name) + i*4231) ? -1 : 1);
+        const x = xMidPoint + (randomBool(hashCode(places.here.name) + i*1234) ? -1 : 1);
+        console.log("Item at "+y+" "+x);
         map[y][x] = "<span style='color:"+ITEM_COLOR+";'>"+ITEM_CHARACTER+"</span>";
     }
     
@@ -217,13 +220,13 @@ function addLabels(map, places){
         if (i > mapHeight/2-1){
             const midPoint = Math.floor(mapHeight/2);
             if (i === midPoint){
-                newMap.push(" ".repeat(MAX_NAME_WIDTH - elipsedLeftLines[0].length) +  elipsedLeftLines[0] + " ◄- W " + splitMap[i].join("") + " E -► " + elipsedRightLines[0]);
+                newMap.push(" ".repeat(MAX_NAME_WIDTH - elipsedLeftLines[0].trim("\n").length) +  elipsedLeftLines[0].trim("\n") + " ◄- W " + splitMap[i].join("") + " E -► " + elipsedRightLines[0].trim("\n"));
             }
             else{
-                const rightLine = elipsedRightLines[i-midPoint] == undefined ? "" : elipsedRightLines[i-midPoint];
+                const rightLine = elipsedRightLines[i-midPoint] == undefined ? "" : elipsedRightLines[i-midPoint].trim("\n");
 
                 if (elipsedLeftLines[i-midPoint] != undefined){
-                    newMap.push(" ".repeat(MAX_NAME_WIDTH - elipsedLeftLines[i-midPoint].length) + elipsedLeftLines[i-midPoint] + " ".repeat(6) + splitMap[i].join("") + " ".repeat(6) + rightLine);
+                    newMap.push(" ".repeat(MAX_NAME_WIDTH - elipsedLeftLines[i-midPoint].trim("\n").length) + elipsedLeftLines[i-midPoint].trim("\n") + " ".repeat(6) + splitMap[i].join("") + " ".repeat(6) + rightLine);
                 }
                 else{
                     newMap.push(" ".repeat(leftOffset) + splitMap[i].join(""));
@@ -249,7 +252,7 @@ function ellipsis (input, lngth) {
 function getPlaceString(biomeChar, placeName){
     let str = "";    
     for (let i = 0; i < 50; i++){
-        str += randomBool(hashCode(placeName)^(i+1) * (i+1)) ? BASE_CHARACTER : biomeChar[(hashCode(placeName[0])+i^2)%biomeChar.length];
+        str += randomBool(hashCode(placeName)**(i+1) * (i+1)) ? BASE_CHARACTER : biomeChar[(hashCode(placeName[0])+i^2)%biomeChar.length];
         //str += biomeChar;
     }
     return str;

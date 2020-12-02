@@ -77,11 +77,33 @@ pre#minimap{
 	padding:20px;
 }
 
+#objectActionShortTip{
+    display:none;
+}
+#objectActionLongTip{
+    display:block;
+}
+    
 @media screen and (orientation:portrait) {
 	body{
 		font-size:2em;
 	}
     pre#minimap{
+        display:none;
+    }
+    #input, .history{
+        max-width:100%;
+    }
+    #biomeTip{
+        display:none;
+    }
+    #objectActionShortTip{
+        display:block;
+    }
+    #objectActionLongTip{
+        display:none;
+    }
+    .extendedHelp{
         display:none;
     }
 }

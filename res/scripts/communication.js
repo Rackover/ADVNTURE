@@ -701,7 +701,7 @@ function parsePage(page){
 function updateDimensionText(name, count, explored){
 	dimensionName = name;
     pageCount = count;
-	document.getElementById("dimensionInfo").textContent = "Currently exploring region "+name+" ("+count+" places - "+Math.ceil(explored*100)+"% explored)";
+	document.getElementById("dimensionInfo").textContent = "Currently exploring region "+name+" ("+count+" places - "+(isNaN(explored) ? 0 : Math.ceil(explored*100))+"% explored)";
 }
 
 function formatHPEventLine(value){
@@ -721,6 +721,7 @@ function isVowel(c) {
 function showEditor(action, place){
 	isInEditor = true;
     isObjectAction = action.split(" ")[0].toUpperCase() == "USE";
+    
 	return document.getElementById("editorNotice").innerHTML.replace("%action", action);
 }
 
