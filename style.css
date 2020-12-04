@@ -106,6 +106,9 @@ pre#minimap{
     .extendedHelp{
         display:none;
     }
+    #dimensionInfo{
+        display:none;
+    }
 }
 
 @media (max-aspect-ratio: 16/10) or (max-width: 600px) {

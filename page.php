@@ -573,6 +573,11 @@ function receive_submission($db, $p, $player){
                 if ($biome == $default_biome && $submission["isDeadEnd"]){
                     $biome = get_page_biome_id($db, $submission["origin"]);
                 }
+                
+                // If nothing works and this is a stacked position (object with no TP), keep the same biome
+                if ($biome == $default_biome && $shift === false){
+                    $biome = get_page_biome_id($db, $submission["origin"]);
+                }
             }
         }
         
@@ -605,7 +610,7 @@ function receive_submission($db, $p, $player){
         // additional, automatic passages created by the grid
         if ($is_grid_dimension){
             
-            if ($shift == false && !$submission["objectTeleport"]){
+            if ($shift == false){
                 $db->prepare("INSERT INTO page_succession (origin_id, target_id, command) VALUES (?,?,?)")
                 ->execute([$submission["origin"], $pageId, trim($submission["direction"])]);
             }

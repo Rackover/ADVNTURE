@@ -54,7 +54,7 @@
         <div id="mainContainer">
             <div id="title">
                 <h1>
-                    <span style='color:grey;'><a style="color:inherit; text-decoration:inherit;" href='https://louve.systems/'>LOUVESYSTEMS</a>'</span> <b>ADVNTURE</b> <span style='color:grey;'>V2.0.0<span style="float:right;" id="dimensionInfo"></span>
+                    <span style='color:grey;'><a style="color:inherit; text-decoration:inherit;" href='https://louve.systems/'>LOUVESYSTEMS</a>'</span> <b>ADVNTURE</b> <span style='color:grey;'>V2.0.1<span style="float:right;" id="dimensionInfo"></span>
                 </h1>
             </div>
             <div class="terminal">
@@ -63,12 +63,13 @@
                 </div>
             </div>
             <pre id="minimap" style="line-height:1;FONT-family:Dos;"> </pre>
-            <div style="margin-top:5px;display:flex;flex-direction:row;width:100%; justify-content:space-between;font-size:0.8em;">
+            <div class="extendedHelp" style="margin-top:5px;display:flex;flex-direction:row;width:100%; justify-content:space-between;font-size:1em;">
                 <div style="text-align:left;">
                     Join the <a style="color:white;" target="_blank" href="https://discord.gg/WQWZBN3">DISCORD</a>!
                 </div>
-                <div>
-                    Here's a <a style="color:white;" target="_blank" href="https://www.youtube.com/watch?v=QIxRDU_l8Bc&loop=1">fitting soundtrack</a> if you need one!     
+                <div style="text-align:center;">
+                    <!--Here's a <a style="color:white;" target="_blank" href="https://www.youtube.com/watch?v=QIxRDU_l8Bc&loop=1">fitting soundtrack</a> if you need one!  -->
+                    <a style="color:orange;font-weight:bold;font-size:1.5em;" target="_blank" href="https://portfolio.louve.systems/">HIRE ME!</a><br> I'm looking for a job as a Game Designer!
                 </div>
                 <div style="text-align:right;">
                     Follow me on <a style="color:white;" target="_blank" href="https://twitter.com/Rackover">TWITTER</a>!
@@ -96,7 +97,7 @@
             <div id="editorTips" style="display:none">
                 <b>Tips:</b><br>
                 <ul style="list-style: none">
-                    <li>- Add props by saying "<span class="notice"><b>There is </b>1 something</span>" or "<span class="notice"><b>There are</b> X somethings</span>"</li>
+                    <li>- Add props by saying "<span class="notice"><b>There is </b>1 something</span>" or "<span class="notice"><b>There are</b> X somethings</span>" on a new line</li>
                     <li>- Inflict damage or heal the player by saying "<span class="notice"><b>You gain X healthpoints</b></span>" or "<span class="notice"><b>You lose X healthpoints</b></span>"</li>
                     <li id="biomeTip">- Don't forget to supply an environment by adding <span class="notice"><b>(Environment)</b></span> after your title, for example: "<b>My place (Forest)</b>". Available environments are:<br><?php echo "(".implode("), (", $biome_help_list).")"; ?></li>
                 </ul>
@@ -131,7 +132,6 @@
                     <li>- <b>REGIONS</b>: List the available regions to explore</li>
                     <li>- <b>WARP &lt;region&gt;</b>: Teleport you to another region</li>
                     <li>- <b>CLEAR</b>: Clears the console.</li>
-                    <li>- <b>INTRO</b>: Prints the welcome message.</li>
                     <li>- <b>CREDITS</b>: Prints the credits.</li>
                     <li>- <b>HELP</b>: Prints this message.</li>
                 </ul>
@@ -166,8 +166,8 @@
 d88P     888 8888888P"      Y8P     888    Y888     888      "Y88888P"  888   T88b 8888888888</pre></h1></div>
                 <h2 style="color:white;"><b><span  id="introWelcomeBar1">------------ </span>Welcome to LouveSystems' ADVNTURE!<span  id="introWelcomeBar2"> ------------</span></b></h2>
                 <p>ADVNTURE is a game of free exploration and creation.<br>It has no restriction and is only made of what you, and other players, decide to pour into it.</p>
-                <p>Enjoy your stay on ADVNTURE - and by all means, expand it in all directions.<br>Do not worry about your language skills, for the vast majority of people aren't native speakers!</p>
-                <p><b> The world is yours. Make it your haven!</b></p>
+                <p>Enjoy your stay on ADVNTURE - and by all means, expand it in all directions. Any place you reach first is yours to describe!<br>Do not worry about your language skills, for the vast majority of people aren't native speakers!</p>
+                <p><b>The world is yours - Make it your haven!</b></p>
                 <p class="emphasis"><b>Type HELP</b> to get a list of commands.<br>Type <b>BRIEF</b> to know where you are.</p>
             </div>
             <div id="death" style="display:none">

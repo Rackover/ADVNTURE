@@ -10,6 +10,8 @@ ini_set('session.cookie_lifetime', 315360000);
 ini_set('session.use_cookies', 1);
 ini_set('session.use_only_cookies', 1);
 
+session_save_path(realpath('/tmp/advnture'));
+
 session_start();
  
 include_once "database.php";

@@ -432,6 +432,7 @@
         $statement = $db->prepare("
             SELECT
               page.content,
+              page.position,
               page.id AS page_id,
               page.is_dead_end,
               page.is_hidden,
@@ -467,6 +468,7 @@
         $connections = [];
         $hp_change = 0;
         $page_content = "";
+        $position = "NULL";
         
         while ($row = $statement->fetch()){
             if ($row === false){
@@ -477,6 +479,8 @@
             $author_id = $row["player_id"];
             $page_content = $row["content"];
             $is_dead_end = $row["is_dead_end"];
+            $position = $row["position"] ?? "NULL";
+            
             if ($row["prop_name"] != null){
                 $props[]= array("name"=>$row["prop_name"], "count"=>$row["prop_placement_count"]);
             }
@@ -511,6 +515,7 @@
                 <b class="emphasis">'.$title.'</b> [<b style="color:yellow;">'.$id.'</b>]<br><i>'.$content.'</i><br>Made by <span style="color:white;">PLAYER id:<b style="color:yellow;">'.substr($author_id, 0, 6).'...</b></span> 
                 '.($is_client_banned ? "<span style='color:red;'>" : "").'('.($is_client_banned ? "BANNED " : "").'CLIENT id:<b style="color:yellow;">'.$client_id.'</b>)'.($is_client_banned ? "</span>" : "").'
                 <br>
+                <br>Position: '.($position).'<br>
                 <br>Health change: '.$hp_change.'<br>
                 <br><b>Props</b>: '.implode(", ", $strProps).'<br>
                 <br><b>Connections</b>:
