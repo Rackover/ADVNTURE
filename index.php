@@ -54,7 +54,7 @@
         <div id="mainContainer">
             <div id="title">
                 <h1>
-                    <span style='color:grey;'><a style="color:inherit; text-decoration:inherit;" href='https://louve.systems/'>LOUVESYSTEMS</a>'</span> <b>ADVNTURE</b> <span style='color:grey;'>V2.0.1<span style="float:right;" id="dimensionInfo"></span>
+                    <span style='color:grey;'><a style="color:inherit; text-decoration:inherit;" href='https://louve.systems/'>LOUVESYSTEMS</a>'</span> <b>ADVNTURE</b> <span style='color:grey;'>V2.0.2<span style="float:right;" id="dimensionInfo"></span>
                 </h1>
             </div>
             <div class="terminal">

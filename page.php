@@ -42,6 +42,11 @@ function get_cardinal_directions(){
     return ["NORTH", "SOUTH", "EAST", "WEST"];
 }
 
+function is_cardinal_directions($dir){
+    $haystack = get_cardinal_directions();
+    return in_array($dir, $haystack);
+}
+
 function get_surrounding_pages_ids($db, $given_str_position){
     
     $directions = get_cardinal_directions();
@@ -53,9 +58,12 @@ function get_surrounding_pages_ids($db, $given_str_position){
         
         $shift = get_cardinal_direction_position_shift($direction);
         $str_position = ($numerical_position["x"]+$shift["x"])." ".($numerical_position["y"]+$shift["y"]);
-
-        if ($page_id = get_first_page_with_position($db, $str_position)){
-            $pages_ids[$direction] = $page_id;
+        
+        $pages_at_position = get_all_pages_with_position($db, $str_position);
+        $pages_ids[$direction] = [];
+        
+        foreach($pages_at_position as $page_id){            
+            $pages_ids[$direction] []= $page_id;
         }        
     }
     
@@ -71,6 +79,22 @@ function get_first_page_with_position($db, $str_position){
 	$data = $statement->fetch();
     
     return $data === false ? false : $data["id"];
+}
+
+function get_all_pages_with_position($db, $str_position){
+    $statement = $db->prepare(
+		"SELECT id FROM page 
+		WHERE position=?
+        ORDER BY id ASC");
+	$statement->execute([$str_position]);
+    
+    $ids = [];
+    
+	while($data = $statement->fetch()){
+        $ids[]= $data["id"];
+    }
+    
+    return $ids;
 }
 
 function get_page_hourglass_info($db, $page_id, $player){
@@ -398,10 +422,17 @@ function receive_submission($db, $p, $player){
 			// ???
 			// Might just be a place with objects/hpevents but without a description...
 			// Sucks but technically not illegal
-						
-			header('HTTP/1.0 400 Bad Request');
-			echo json_encode(["type"=>"error","content"=>"Not enough was known about this place, and so it never really set in as an interesting location.<br>You decide to turn around and go back to where you came from."]);
-			exit;
+			
+            // We will allow it if it contains HP events, but strip the objects
+            if (count($submission["hpEvents"]) > 0){
+                $submission["props"] = array();
+                 $submission["isDeadEnd"] = true;
+            }
+            else{
+                header('HTTP/1.0 400 Bad Request');
+                echo json_encode(["type"=>"error","content"=>"Not enough was known about this place, and so it never really set in as an interesting location.<br>You decide to turn around and go back to where you came from."]);
+                exit;
+            }
 		}
 		else{
 			
@@ -616,9 +647,11 @@ function receive_submission($db, $p, $player){
             }
                 
             $surroundings_by_direction = get_surrounding_pages_ids($db, $position);
-            foreach($surroundings_by_direction as $direction=>$surrounding_page_id){
-                $db->prepare("INSERT IGNORE INTO page_succession (origin_id, target_id, command) VALUES (?,?,?)")
-                    ->execute([$pageId, $surrounding_page_id, $direction]);
+            foreach($surroundings_by_direction as $direction=>$surrounding_page_ids){
+                foreach($surrounding_page_ids as $surrounding_page_id){
+                    $db->prepare("INSERT IGNORE INTO page_succession (origin_id, target_id, command) VALUES (?,?,?)")
+                        ->execute([$pageId, $surrounding_page_id, $direction]);
+                }
             }
         }
         else{

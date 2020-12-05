@@ -21,7 +21,7 @@
         "PAGEID" => 'command_page_id',
         "MUSIC" => 'command_music',
         "CREDITS" => 'command_credits',
-        "CLIENT" => 'command_client_id',
+        "CLIENTID" => 'command_client_id',
         "FAKEBAN" => 'command_fake_ban',
         "STATUS" => 'command_hp_status',
         "REST" => 'command_rest',
@@ -31,12 +31,14 @@
         "REGION" => 'command_get_dimension',
 		"LOCATION" => 'command_get_location',
         "MAP" => 'command_get_map',
+        "UNDO" => 'command_undo',
         
         "N" => 'command_direction_north',
         "S" => 'command_direction_south',
         "E" => 'command_direction_east',
         "W" => 'command_direction_west',
         "LOOK" => 'command_brief',
+        "LIST" => 'command_brief',
         "?" => 'command_help',
         "CRASH" => 'command_crash',
         "HEALTHCHECK" => 'command_hp_status',
@@ -47,6 +49,8 @@
 		"POSITION" => 'command_get_location',
         "DRAWMAP" => 'command_get_map',
         "SURROUNDINGS" => 'command_get_map',
+        "INV" => 'command_props',
+        "POCKETS" => 'command_props',
     
         "IDENTIFY"=> 'command_identify',
         "SHOWLAST"=> 'command_last_uploads',
@@ -73,7 +77,17 @@
     }
     
     function command_direction($db, $elements, $player, $direction){
-        $page = get_page($db, $player["location"], $player);
+       
+        $page_id = $player["location"];
+        
+        if (is_player_dimension_grid_based($db, $player) && is_cardinal_directions($direction)){
+            // For stacked locations we make sure you can always go in all directions by only checking connections with root location
+            // Note: THIS IS NOT NECESSARY normally, as all necessary connections are created upon page creation...
+            $page_id = get_first_page_with_position($db, $player["position"]);
+        }
+        
+        $page = get_page($db, $page_id, $player);
+        
         if (isset($page["outputs"][$direction])){
             $newId = $page["outputs"][$direction]["destination"];
             
@@ -104,7 +118,7 @@
 			
             // Returning results
             if ($newPage["is_dead_end"]){
-                return_200("status", $newPage["content"]);
+                return_200("dead_end", $newPage);
             }
             
             $db->prepare("UPDATE player SET page_id=? WHERE id=?")->execute([$newId, $player["id"]]);
@@ -248,7 +262,7 @@
     }
     
     function command_client_id($db, $elements, $player){
-        return_200("status", "Your client ID is: <span style='color:yellow;font-weight:bold'>".$player["client_id"]."</span> (ADDR: <span style='font-weight:bold;color:lightgreen;'>".$player["client_address"]."</span>)");
+        return_200("status", "Your client ID is: <span style='color:yellow;'>".$player["client_id"]."</span> (ADDR: <span style='color:lightgreen;'>".$player["client_address"]."</span>)");
     }
     
     function command_brief($db, $elements, $player){
@@ -356,6 +370,17 @@
     function command_get_map($db, $elements, $player){
         $map = map\get_html_characters_map($db, $player);
         return_200("status", $map);
+    }
+    
+    function command_undo($db, $elements, $player){
+        return_200("status", "If you think you have made a mistake while creating a location, you may contact the webmaster on the ADVNTURE discord directly to have it get edited or removed.<br>
+        Please type the following commands:<br>
+        <ul>
+            <li>PAGEID</li>
+            <li>WHOAMI</li>
+            <li>CLIENTID</li>
+        </ul>
+        ... and then send the resulting informations on <a href='https://discord.gg/WQWZBN3'>discord</a>.");
     }
         
   function command_hp_status($db, $elements, $player){

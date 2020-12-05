@@ -196,9 +196,14 @@ function updateText(){
                 hTxt += "<br>"+lengthNotice;
             }
             
-			if (characterCount > 0){
-				hTxt += "<br><br><span class='notice'>"+document.getElementById("editorTips").innerHTML+(isObjectAction ? document.getElementById("objectActionTips").innerHTML : "")+"</span>";
-			}
+			if (parsed.isDeadEnd){
+                hTxt += "<br><span class='notice'>With only objects or events, and without a description, this place will be a dead end. <b><br>Note: A dead end cannot have objects</b>, they will be stripped upon submission.</span>"; 
+            }
+            else{
+                if (characterCount > 0){
+                    hTxt += "<br><br><span class='notice'>"+document.getElementById("editorTips").innerHTML+(isObjectAction ? document.getElementById("objectActionTips").innerHTML : "")+"</span>";
+                }
+            }
 		}
 	}
 	
@@ -437,7 +442,7 @@ function parseText(){
 		hpEvents: hpEvents,
 		dryText: joinManually(dryTextLines, false),
 		dryTitle: dryTitle,
-		isDeadEnd: isDeadEnd,
+		isDeadEnd: isDeadEnd || dryTextLines.length == 0,
 		direction: editorDirection,
 		origin: currentPage,
         objectTeleport: isObjectAction && !isStackedLocation,
@@ -564,6 +569,7 @@ function interpretServerFeedback(data){
 		case "death":
 		case "brief":
 		case "recovery":
+        case "dead_end":
 		case "warp":
 			currentPage = data.content.id;
 			if (data.type === "brief" || data.type === "recovery"){
@@ -578,6 +584,9 @@ function interpretServerFeedback(data){
 			if (data.type === "warp"){
 				data.content.isWarp = true;
 			}
+            if (data.type == "dead_end"){
+                data.content.isDeadEnd = true;
+            }
             
 			return parsePage(data.content);
 			
@@ -614,7 +623,10 @@ function interpretServerFeedback(data){
 			
 		case "intro":
 			currentPage = data.content.id;
-			updateDimensionText(data.content.dimension_name, data.content.pages_count);
+            if (data.content.dimension_name){
+                updateDimensionText(data.content.dimension_name, data.content.pages_count);
+            }
+            
 			return document.getElementById("intro").innerHTML;
 			break;
 			
@@ -652,32 +664,32 @@ function parsePage(page){
 	
     currentPageName = elements[0];
     
-	if (elements.length == 1){
-		lines = elements;
+	if (page.isDeadEnd || elements.length == 1){
+		lines.push(currentPageName);
 	}
     else{
         const hourglass = content.hourglass ?? page.hourglass;
         const color = biomeContents[hourglass?.here.biome];
         const styleInfo = color == undefined ? "" : "style='color:"+color?.color+";'";
         lines.push("<b "+styleInfo+">"+elements[0]+"</b>");
+    
+        for(let i=1; i< elements.length; i++){
+            lines.push(elements[i]);
+        }
+            
+        // Props
+        if (page.props.length > 0){
+            lines.push("");
+        }
+        for (k in page.props){
+            lines.push("<span class='object'>"+
+            formatPropLine(page.props[k].name, page.props[k].count)+
+            ".</span>");
+        }
     }
-	
-	for(let i=1; i< elements.length; i++){
-		lines.push(elements[i]);
-	}
-		
-    // Props
-    if (page.props.length > 0){
-        lines.push("");
-    }
-	for (k in page.props){
-		lines.push("<span class='object'>"+
-		formatPropLine(page.props[k].name, page.props[k].count)+
-		".</span>");
-	}
 		
     // HP Events
-    if (page.hp_events.length > 0){
+    if (page.hp_events.length > 0 && !page.isDeadEnd){
         lines.push("");
     }
 	for (k in page.hp_events){
