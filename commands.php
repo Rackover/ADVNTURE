@@ -118,6 +118,7 @@
 			
             // Returning results
             if ($newPage["is_dead_end"]){
+                unset($newPage["hourglass"]);
                 return_200("dead_end", $newPage);
             }
             
