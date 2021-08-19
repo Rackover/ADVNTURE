@@ -52,6 +52,12 @@ function recover($db, $p, $player){
 	
     $content["dimension_type"] = is_player_dimension_grid_based($db, $player) ? "GRID" : "BRANCH";
 	$content["dimension_name"] = $player["dimension_name"];
+	
+	// Starting page name
+	$starting_page_id = get_starting_page_id_for_player($db, $player);	
+	$starting_page = get_page($db, $starting_page_id, $player);
+	
+	$content["dimension_starting_page_name"] = explode("\n", $starting_page["content"])[0];
 	$content["pages_count"] = get_page_count_in_dimension($db, $player["dimension"]);
     
 	echo json_encode([

@@ -54,7 +54,7 @@
         <div id="mainContainer">
             <div id="title">
                 <h1>
-                    <span style='color:grey;'><a style="color:inherit; text-decoration:inherit;" href='https://louve.systems/'>LOUVESYSTEMS</a>'</span> <b>ADVNTURE</b> <span style='color:grey;'>V2.0.2<span style="float:right;" id="dimensionInfo"></span>
+                    <span style='color:grey;'><a style="color:inherit; text-decoration:inherit;" href='https://louve.systems/'>LOUVESYSTEMS</a>'</span> <b>ADVNTURE</b> <span style='color:grey;'>V2.0.3<span style="float:right;" id="dimensionInfo"></span>
                 </h1>
             </div>
             <div class="terminal">
@@ -68,8 +68,8 @@
                     Join the <a style="color:white;" target="_blank" href="https://discord.gg/WQWZBN3">DISCORD</a>!
                 </div>
                 <div style="text-align:center;">
-                    <!--Here's a <a style="color:white;" target="_blank" href="https://www.youtube.com/watch?v=QIxRDU_l8Bc&loop=1">fitting soundtrack</a> if you need one!  -->
-                    <a style="color:orange;font-weight:bold;font-size:1.5em;" target="_blank" href="https://portfolio.louve.systems/">HIRE ME!</a><br> I'm looking for a job as a Game Designer!
+                    Here's a <a style="color:white;" target="_blank" href="https://www.youtube.com/watch?v=QIxRDU_l8Bc&loop=1">fitting soundtrack</a> if you need one!
+               <!--     <a style="color:orange;font-weight:bold;font-size:1.5em;" target="_blank" href="https://portfolio.louve.systems/">HIRE ME!</a><br> I'm looking for a job as a Game Designer!-->
                 </div>
                 <div style="text-align:right;">
                     Follow me on <a style="color:white;" target="_blank" href="https://twitter.com/Rackover">TWITTER</a>!
@@ -174,7 +174,7 @@ d88P     888 8888888P"      Y8P     888    Y888     888      "Y88888P"  888   T8
                 <span style='color:red;'>=============================<br><br></span>
                 <b style='color:red';>You fainted!</b><br><br>
                 Exhausted by your journey, you feel your limbs become numb and you decide to shut your eyes for a moment.
-                When you regain consciousness, you find yourself in the <span style='color:white;'>Forest outskirts</span>, stripped from all your belongings.<br><br>
+                When you regain consciousness, you find yourself in the <span style='color:white;'>%starting_page_name</span>, stripped from all your belongings.<br><br>
             </div>
         </div>
     </body>

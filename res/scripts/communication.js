@@ -13,6 +13,7 @@ let previousHourglass;
 let currentPageName = "";
 let isGridDimension;
 let isObjectAction = false;
+let startingPageName = "";
 
 const maxNumberOfCharacters = 256; // I suggest you do not try to change that.
 const allowedChars = ':;,!?.azertyuiopqsdfghjklmwxcvbnAZERTYUIOPQSDFGHJKLMWXCVBN&()-"\'$1234567890⠀';
@@ -623,10 +624,6 @@ function interpretServerFeedback(data){
 			
 		case "intro":
 			currentPage = data.content.id;
-            if (data.content.dimension_name){
-                updateDimensionText(data.content.dimension_name, data.content.pages_count);
-            }
-            
 			return document.getElementById("intro").innerHTML;
 			break;
 			
@@ -698,22 +695,30 @@ function parsePage(page){
 
 	if (page.updateDimension){
         isGridDimension = page.dimension_type == "GRID";
-		updateDimensionText(page.dimension_name, page.pages_count, page.completion);
+		updateDimensionText(page.dimension_name, page.pages_count, page.completion, page.dimension_starting_page_name);
 	}
     else if (page.completion){
-		updateDimensionText(dimensionName, pageCount, page.completion);
+		updateDimensionText(dimensionName, pageCount, page.completion, page.dimension_starting_page_name);
     }
-
-	return (page.isDeath && page.death_page != undefined ? parsePage(page.death_page) + "<br><br>" : "")
-	+ (page.isDeath ? document.getElementById("death").innerHTML : "") 
+	
+	const str = (page.isDeath && page.death_page != undefined ? parsePage(page.death_page) + "<br><br>" : "")
+	+ (page.isDeath ? document.getElementById("death").innerHTML.replace("%starting_page_name", startingPageName) : "") 
 	+ (page.isWarp ? document.getElementById("warp").innerHTML.replace("%dimension", initialUpperCase(page.dimension_name)) : "") 
 	+ lines.join("<br>");
+	
+	
+	
+	return str;
 }
 
-function updateDimensionText(name, count, explored){
+function updateDimensionText(name, count, explored=0, startPageName=null){
 	dimensionName = name;
     pageCount = count;
 	document.getElementById("dimensionInfo").textContent = "Currently exploring region "+name+" ("+count+" places - "+(isNaN(explored) ? 0 : Math.ceil(explored*100))+"% explored)";
+	
+	if (startPageName){
+		startingPageName = startPageName.trim();
+	}
 }
 
 function formatHPEventLine(value){

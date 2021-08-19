@@ -9,7 +9,7 @@ function get_html_characters_map($db, $player, $radius=3){
     
     if (is_player_dimension_grid_based($db, $player)){
         
-        $page_id = get_first_page_with_position($db, $str_position);
+        $page_id = get_first_page_with_position($db, $str_position, $player["dimension"]);
         
         if ($page_id){
             $arr_position = explode(" ", $str_position);

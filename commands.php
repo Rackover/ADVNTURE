@@ -83,47 +83,47 @@
         if (is_player_dimension_grid_based($db, $player) && is_cardinal_directions($direction)){
             // For stacked locations we make sure you can always go in all directions by only checking connections with root location
             // Note: THIS IS NOT NECESSARY normally, as all necessary connections are created upon page creation...
-            $page_id = get_first_page_with_position($db, $player["position"]);
+            $page_id = get_first_page_with_position($db, $player["position"], $player["dimension"]);
         }
         
         $page = get_page($db, $page_id, $player);
         
         if (isset($page["outputs"][$direction])){
-            $newId = $page["outputs"][$direction]["destination"];
+            $new_id = $page["outputs"][$direction]["destination"];
             
-			player_give_vision_on_page($db, $player["id"], $newId);
+			player_give_vision_on_page($db, $player["id"], $new_id);
             
-            $newPage = get_page($db, $newId, $player);
+            $new_page = get_page($db, $new_id, $player);
             
             
             // HP Calculation
             $change = 0;
-            foreach($newPage["hp_events"] as $hpChange){
+            foreach($new_page["hp_events"] as $hpChange){
                 $change += $hpChange;
             }
             $player["hp"] += $change;
             $player["hp"] = min($player["hp"], MAX_HP);
                 
             if ($player["hp"] <= 0){
-                $firstPage = get_starting_page_id_for_player($db, $player);
-                $db->prepare("UPDATE player SET page_id=? WHERE id=?")->execute([$firstPage."", $player["id"]]);    
+                $first_page = get_starting_page_id_for_player($db, $player);
+                $db->prepare("UPDATE player SET page_id=? WHERE id=?")->execute([$first_page."", $player["id"]]);    
                 $db->prepare("UPDATE player SET hp=? WHERE id=?")->execute([BASE_HP, $player["id"]]);    
                 $db->prepare("DELETE FROM player_prop WHERE player_id=?")->execute([$player["id"]]);
-                return_200("death", array_merge(get_page($db, $firstPage, $player), ["death_page"=>$newPage]));
+                return_200("death", array_merge(get_page($db, $first_page, $player), ["death_page"=>$new_page]));
             }
             else if ($change != 0){
                 $db->prepare("UPDATE player SET hp=? WHERE id=?")->execute([$player["hp"], $player["id"]]);
-                // $newPage["content"].= "<br>"."(You currently have ".$player["hp"]." health points)";
+                // $new_page["content"].= "<br>"."(You currently have ".$player["hp"]." health points)";
             }
 			
             // Returning results
-            if ($newPage["is_dead_end"]){
-                unset($newPage["hourglass"]);
-                return_200("dead_end", $newPage);
+            if ($new_page["is_dead_end"]){
+                unset($new_page["hourglass"]);
+                return_200("dead_end", $new_page);
             }
             
-            $db->prepare("UPDATE player SET page_id=? WHERE id=?")->execute([$newId, $player["id"]]);
-            return_200("page", $newPage);
+            $db->prepare("UPDATE player SET page_id=? WHERE id=?")->execute([$new_id, $player["id"]]);
+            return_200("page", $new_page);
         }
         else{
             $state = $db->prepare("SELECT readonly FROM dimension WHERE id=?");
@@ -344,6 +344,8 @@
         
         $page = get_page($db, $page_id, $player);
         $page["dimension_name"] = $player["dimension_name"];
+        $page["dimension_starting_page_name"] = explode("\n", $page["content"])[0];
+				
         $page["pages_count"] = get_page_count_in_dimension($db, $player["dimension"]);
 
         $db->prepare("UPDATE player SET page_id=? WHERE id=?")->execute([$page["id"], $player["id"]]);
@@ -427,9 +429,9 @@
         
         return_200("status", 
             "You're currently "
-                .($y != 0 ? abs($y)." leagues ".($y != 0 ? "north" : "south") : "")
+                .($y != 0 ? abs($y)." league".(abs($y)>1 ? "s" : "")." ".($y < 0 ? "south" : "north") : "")
                 .($y*$x != 0 ? " and " : "")
-                .($x != 0 ? abs($x)." leagues ".($x < 0 ? "east" : "west") : "")
+                .($x != 0 ? abs($x)." league".(abs($x)>1 ? "s" : "")." ".($x < 0 ? "west" : "east") : "")
             ." from this region's landmark."); 
     }
     
@@ -583,18 +585,28 @@
     $state = $db->prepare("SELECT id FROM page WHERE content LIKE ?");
     $state->execute([$name."\n%"]);
     $data = $state->fetch();
+	
+	$id = $name;
+	
     if ($data === false){
         if (count($elements) > 0 && intval($elements[0])){
-            $data = array("id"=> $elements[0]);
+            $data = array("id"=> intval($elements[0]));
         }
         else{
+			// Maybe it's an ID
             return_200("status", "No such page as ".$name);
         }
     }
     
-    $page = get_page($db, $data["id"], $player);
-    $db->prepare("UPDATE player SET page_id=? WHERE id=?")->execute([$data["id"], $player["id"]]);
-    return_200("page", $page);
+	try{
+		player_give_vision_on_page($db, $player["id"], $data["id"]);
+		$page = get_page($db, $data["id"], $player);
+		$db->prepare("UPDATE player SET page_id=? WHERE id=?")->execute([$data["id"], $player["id"]]);
+		return_200("page", $page);
+	}
+	catch(Exception $e){
+		return_200("status", ("Error during goto with elements ".json_encode($elements)." and data ".json_encode($data)." and ID ".$data["id"].": no such page as ".($e->getMessage())));
+	}
   }
   
   function command_ban_client($db, $elements, $player){

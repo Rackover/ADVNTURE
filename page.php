@@ -7,17 +7,6 @@ define("OBJECT_TELEPORT_BASE_RANGE", 30);
 define("ALLOW_BANNED_SUBMISSIONS", true);
 
 
-
-function get_starting_page_id_for_player($db, $player){
-	$statement = $db->prepare(
-		"SELECT starting_page FROM dimension 
-		WHERE id=?");
-	$statement->execute([$player["dimension"]]);
-	$id = $statement->fetch()["starting_page"];
-
-	return $id;
-}
-
 function get_starting_page_id_for_dimension($db, $dimension_id){
 	$statement = $db->prepare(
 		"SELECT starting_page FROM dimension 
@@ -26,6 +15,10 @@ function get_starting_page_id_for_dimension($db, $dimension_id){
 	$id = $statement->fetch()["starting_page"];
 
 	return $id;
+}
+
+function get_starting_page_id_for_player($db, $player){
+	return get_starting_page_id_for_dimension($db, $player["dimension"]);
 }
 
 function get_starting_page_id($db){
@@ -47,7 +40,7 @@ function is_cardinal_directions($dir){
     return in_array($dir, $haystack);
 }
 
-function get_surrounding_pages_ids($db, $given_str_position){
+function get_surrounding_pages_ids($db, $given_str_position, $dimension){
     
     $directions = get_cardinal_directions();
     $pages_ids = [];
@@ -59,7 +52,7 @@ function get_surrounding_pages_ids($db, $given_str_position){
         $shift = get_cardinal_direction_position_shift($direction);
         $str_position = ($numerical_position["x"]+$shift["x"])." ".($numerical_position["y"]+$shift["y"]);
         
-        $pages_at_position = get_all_pages_with_position($db, $str_position);
+        $pages_at_position = get_all_pages_with_position($db, $str_position, $dimension);
         $pages_ids[$direction] = [];
         
         foreach($pages_at_position as $page_id){            
@@ -70,23 +63,25 @@ function get_surrounding_pages_ids($db, $given_str_position){
     return $pages_ids;
 }
 
-function get_first_page_with_position($db, $str_position){
+function get_first_page_with_position($db, $str_position, $dimension){
     $statement = $db->prepare(
 		"SELECT id FROM page 
 		WHERE position=?
+		AND dimension_id=?
         ORDER BY id ASC");
-	$statement->execute([$str_position]);
+	$statement->execute([$str_position, $dimension]);
 	$data = $statement->fetch();
     
     return $data === false ? false : $data["id"];
 }
 
-function get_all_pages_with_position($db, $str_position){
+function get_all_pages_with_position($db, $str_position, $dimension){
     $statement = $db->prepare(
 		"SELECT id FROM page 
 		WHERE position=?
+		AND dimension_id=?
         ORDER BY id ASC");
-	$statement->execute([$str_position]);
+	$statement->execute([$str_position, $dimension]);
     
     $ids = [];
     
@@ -98,6 +93,7 @@ function get_all_pages_with_position($db, $str_position){
 }
 
 function get_page_hourglass_info($db, $page_id, $player){
+	
 	$statement = $db->prepare(
 		"
         SELECT 
@@ -191,12 +187,13 @@ function get_page_position($db, $page_id){
     return ["x"=>$x, "y"=>$y];    
 }
 
-function is_position_occupied($db, $position){
+function is_position_occupied($db, $position, $dimension){
     
     $statement = $db->prepare(
 		"SELECT id FROM page 
-		WHERE position=?");
-	$statement->execute([$position]);
+		WHERE position=?
+		AND dimension_id=?");
+	$statement->execute([$position, $dimension]);
 	$data = $statement->fetch();
     
     return $data != false;
@@ -280,9 +277,8 @@ function get_page($db, $id, $player){
 	$statement->execute([ $id ]);
 	$result = $statement->fetchAll();
 	
-	if ($result === false || $result[0]["content"] == null){
-		var_dump($id);
-		echo false;
+	if ($result === false || count($result) <= 0 || !isset($result[0]) || $result[0]["content"] == null){
+		throw new Exception("".$id);
 		// This should never happen
 	}
 		
@@ -340,12 +336,12 @@ function get_page($db, $id, $player){
 	}
 	
 	// HP Event
-	$hpEventsDone = [];
+	$hp_events_done = [];
 	foreach($result as $he){
 		if ($he["hp_change"] === null) continue;
-		if (in_array($he["id"], $hpEventsDone)) continue;
+		if (in_array($he["id"], $hp_events_done)) continue;
 		$page["hp_events"][] = $he["hp_change"]; 
-		$hpEventsDone[] = $he["id"];
+		$hp_events_done[] = $he["id"];
 	}
 
 	// Outputs
@@ -370,9 +366,24 @@ function get_page($db, $id, $player){
     // Hourglass
     $page["hourglass"]["here"] = get_page_hourglass_info($db, $page["id"], $player);
     $cardinal_directions = get_cardinal_directions();
+	$root_page = $page;
+	
+	
+	if ($is_grid_based){
+		$root_page_id = get_first_page_with_position($db, $page["position"], $player["dimension"]);
+		
+		// $root_page_id can be FALSE when using GOTO to traverse dimensions (not recommended!)
+		// or if the landing page for a dimension is a stacked page (not recommended either!)
+		// That is because player["dimension"] is different from the target page dimension, which does not arrive during normal gameplay
+		// It's okay. Let's just not crash everyone for that
+		if ($root_page_id != false && $root_page_id != $page["id"]){
+			$root_page = get_page($db, $root_page_id, $player);
+		}
+	}
+	
     foreach($cardinal_directions as $direction){
-        if (isset($page["outputs"][$direction])){
-            $page["hourglass"][$direction] = get_page_hourglass_info($db, $page["outputs"][$direction]["destination"], $player); 
+        if (isset($root_page["outputs"][$direction])){
+            $page["hourglass"][$direction] = get_page_hourglass_info($db, $root_page["outputs"][$direction]["destination"], $player); 
         }
         else{
             $page["hourglass"][$direction] = get_page_hourglass_info($db, 0, $player); // Getting inexistant page
@@ -552,7 +563,7 @@ function receive_submission($db, $p, $player){
                         
                         $position = [$origin_position["x"] + $randX * $offset * $shiftIncrement, $origin_position["y"] + $randY * $offset * $shiftIncrement];
                         $position = implode(" ", $position);
-                        $ok = !is_position_occupied($db, $position);
+                        $ok = !is_position_occupied($db, $position, $player["dimension"]);
                         
                             
                         if ($ok){
@@ -573,7 +584,7 @@ function receive_submission($db, $p, $player){
                 while(!$ok){
                     $position = [$origin_position["x"] + $shift["x"] * $shiftIncrement, $origin_position["y"] + $shift["y"]* $shiftIncrement];
                     $position = implode(" ", $position);
-                    $ok = !is_position_occupied($db, $position);
+                    $ok = !is_position_occupied($db, $position, $player["dimension"]);
                     
                     if ($ok){
                         break;
@@ -646,7 +657,7 @@ function receive_submission($db, $p, $player){
                 ->execute([$submission["origin"], $pageId, trim($submission["direction"])]);
             }
                 
-            $surroundings_by_direction = get_surrounding_pages_ids($db, $position);
+            $surroundings_by_direction = get_surrounding_pages_ids($db, $position, $player["dimension"]);
             foreach($surroundings_by_direction as $direction=>$surrounding_page_ids){
                 foreach($surrounding_page_ids as $surrounding_page_id){
                     $db->prepare("INSERT IGNORE INTO page_succession (origin_id, target_id, command) VALUES (?,?,?)")
